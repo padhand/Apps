@@ -2,806 +2,813 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AppDock</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Quiz Master IDB</title>
     <style>
-        /* Core System Styles */
+        /* --- NATIVE APP THEME --- */
         :root {
-            --bg-color: #f3f4f6;
-            --glass-bg: rgba(255, 255, 255, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.5);
-            --text-color: #1f2937;
-            --nav-bg: rgba(255, 255, 255, 0.9);
-            --icon-size: 3rem; /* Medium default */
+            --primary: #6366f1;
+            --primary-active: #4f46e5;
+            --primary-light: #e0e7ff;
+            
+            --bg-app: #f2f2f7;
+            --bg-surface: #ffffff;
+            --bg-header: rgba(255, 255, 255, 0.95);
+            --bg-tabbar: rgba(255, 255, 255, 0.98);
+            
+            --text-main: #000000;
+            --text-secondary: #8e8e93;
+            
+            --border: #c6c6c8;
+            --separator: #e5e5ea;
+            
+            --danger: #ff3b30;
+            --success: #34c759;
+            --warning: #ffcc00;
+            --blue: #007aff;
+            --radius-card: 16px;
+            --radius-btn: 12px;
+            
+            --shadow-card: 0 2px 8px rgba(0,0,0,0.04);
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+            
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            --font-scale: 1;
         }
-
-        body {
-            background: var(--bg-color);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow-x: hidden;
-            overscroll-behavior-y: none; /* Prevent pull-to-refresh */
+        [data-theme="dark"] {
+            --bg-app: #000000;
+            --bg-surface: #1c1c1e;
+            --bg-header: rgba(28, 28, 30, 0.95);
+            --bg-tabbar: rgba(28, 28, 30, 0.98);
+            --text-main: #ffffff;
+            --text-secondary: #98989d;
+            --border: #38383a;
+            --separator: #38383a;
+            --primary-light: #313136;
         }
-
-        /* Glassmorphism Utilities */
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-        }
-
-        .glass-nav {
-            background: var(--nav-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        /* App Grid Layouts */
-        .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-        .grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-
-        /* Icon Sizes */
-        .icon-sm { width: 2.5rem; height: 2.5rem; font-size: 1.25rem; }
-        .icon-md { width: 3.5rem; height: 3.5rem; font-size: 1.75rem; }
-        .icon-lg { width: 4.5rem; height: 4.5rem; font-size: 2.25rem; }
-
-        /* Utility */
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
         
-        /* App Runner Iframe */
-        #app-frame {
-            border: none;
-            width: 100%;
-            height: 100%;
-            background: white;
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            margin: 0; padding: 0;
+            font-size: calc(16px * var(--font-scale));
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
         }
 
-        /* Prevent text selection on UI elements */
-        .no-select { user-select: none; -webkit-user-select: none; }
+        /* --- LAYOUT STRUCTURE --- */
+        #app-container {
+            height: 100%; width: 100%;
+            display: flex; flex-direction: column;
+        }
+        .app-header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: calc(56px + var(--safe-area-top));
+            padding-top: var(--safe-area-top);
+            background: var(--bg-header);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border-bottom: 0.5px solid var(--separator);
+            z-index: 50;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .header-title { font-weight: 700; font-size: 17px; }
+        .header-btn {
+            position: absolute; top: calc(var(--safe-area-top) + 10px);
+            padding: 6px 14px; 
+            font-size: 14px; 
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            height: 36px;
+        }
+        .header-btn:active { transform: scale(0.96); opacity: 0.8; }
+        .header-btn.left { 
+            left: 12px; 
+            background: rgba(120, 120, 128, 0.12);
+            color: var(--text-main); 
+            border: none;
+        }
+        [data-theme="dark"] .header-btn.left { background: rgba(120, 120, 128, 0.24); }
+        .header-btn.right { 
+            right: 12px; 
+            background: var(--blue); 
+            color: white; 
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.25);
+        }
+
+        .view-container {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-top: calc(66px + var(--safe-area-top)); 
+            padding-bottom: calc(80px + var(--safe-area-bottom));
+            background: var(--bg-app);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .view-container.active { display: block; opacity: 1; }
+
+        .tab-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: calc(60px + var(--safe-area-bottom));
+            padding-bottom: var(--safe-area-bottom);
+            background: var(--bg-tabbar);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid var(--separator);
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 90;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .tab-item {
+            flex: 1; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-secondary);
+            font-size: 10px; font-weight: 500;
+            gap: 4px; cursor: pointer;
+        }
+        .tab-item svg { width: 24px; height: 24px; fill: currentColor; }
+        .tab-item.active { color: var(--blue); }
+
+        .full-screen-overlay {
+            position: fixed; inset: 0;
+            background: var(--bg-app);
+            z-index: 100;
+            display: flex; flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            padding-top: var(--safe-area-top);
+        }
+        .full-screen-overlay.open { transform: translateY(0); }
+
+        /* --- COMPONENTS --- */
+        .card-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 16px; }
+        .quiz-card {
+            background: var(--bg-surface);
+            border-radius: var(--radius-card);
+            padding: 16px;
+            box-shadow: var(--shadow-card);
+            display: flex; flex-direction: column;
+        }
+        .quiz-card:active { opacity: 0.7; }
+        .list-group { background: var(--bg-surface); border-radius: 12px; margin: 16px; overflow: hidden; }
+        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 0.5px solid var(--separator); min-height: 48px; }
+        .list-item:last-child { border-bottom: none; }
+        .list-header { margin: 24px 16px 8px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase; font-weight: 500; }
+        .btn { background: var(--blue); color: white; border: none; padding: 14px; border-radius: var(--radius-btn); font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; width: 100%; }
+        .btn-outline { background: transparent; border: 1px solid var(--blue); color: var(--blue); }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        input, textarea, select { width: 100%; padding: 12px; background: var(--bg-app); border: none; border-radius: 10px; color: var(--text-main); font-size: 16px; }
+        
+        .fab {
+            position: fixed; bottom: calc(80px + var(--safe-area-bottom)); right: 20px;
+            width: 56px; height: 56px; border-radius: 50%;
+            background: var(--blue); color: white;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 80;
+            font-size: 30px; cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+        .flex { display: flex; } 
+        .flex-col { flex-direction: column; }
+        .gap-2 { gap: 8px; } .justify-between { justify-content: space-between; }
+        .text-muted { color: var(--text-secondary); }
+        .file-item { background: var(--bg-surface); padding: 12px 16px; border-bottom: 0.5px solid var(--separator); display: flex; align-items: center; gap: 12px; }
+
+        .switch { position: relative; display: inline-block; width: 50px; height: 30px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e9e9ea; border-radius: 34px; transition: .3s; }
+        [data-theme="dark"] .slider { background-color: #39393d; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden relative">
+<body>
 
-    <!-- 1. Navigation Bar -->
-    <header id="navbar" class="fixed top-0 w-full z-40 glass-nav shadow-sm transition-transform duration-300">
-        <div class="flex justify-between items-center px-4 h-14">
-            <!-- Dynamic Title -->
-            <h1 id="app-title" class="font-bold text-lg truncate w-2/3">AppDock</h1>
-            
-            <!-- Contextual Actions -->
-            <div class="flex items-center space-x-4">
-                <!-- Old Close Button Removed from Header, moved to Floating inside runner -->
-                <button id="settings-btn" class="text-gray-600 hover:text-blue-500 transition">
-                    <i class="fa-solid fa-gear text-xl"></i>
-                </button>
-            </div>
-        </div>
+<div id="app-container">
+    <header class="app-header">
+        <div class="header-title" id="nav-title">Library</div>
     </header>
 
-    <!-- 2. Main App Drawer (Home) -->
-    <main id="app-drawer" class="pt-20 pb-10 px-4 h-full overflow-y-auto scrollbar-hide">
-        <div id="apps-grid" class="grid gap-6 justify-items-center grid-3 transition-all">
-            <!-- Apps injected here via JS -->
-        </div>
-        
-        <div id="empty-state" class="hidden flex flex-col items-center justify-center mt-20 text-gray-400">
-            <i class="fa-solid fa-box-open text-4xl mb-4"></i>
-            <p>No apps installed.</p>
-            <p class="text-sm">Go to Settings > Developer to create one.</p>
-        </div>
-    </main>
-
-    <!-- 3. Settings & Developer Hub (Modal Overlay) -->
-    <div id="settings-modal" class="fixed inset-0 z-50 bg-white transform translate-x-full transition-transform duration-300 flex flex-col">
-        <!-- Header -->
-        <div class="glass-nav h-14 px-4 flex items-center justify-between border-b">
-            <button id="back-btn" class="text-blue-600 flex items-center">
-                <i class="fa-solid fa-chevron-left mr-1"></i> Back
-            </button>
-            <span class="font-semibold">Control Center</span>
-            <div class="w-8"></div> <!-- Spacer -->
-        </div>
-
-        <!-- Tabs -->
-        <div class="flex border-b bg-gray-50">
-            <button class="flex-1 py-3 text-center font-medium text-blue-600 border-b-2 border-blue-600 tab-btn" data-tab="general">Settings</button>
-            <button class="flex-1 py-3 text-center font-medium text-gray-500 tab-btn" data-tab="developer">Developer</button>
-        </div>
-
-        <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto bg-gray-50 p-4 pb-20">
-            
-            <!-- Tab: General Settings -->
-            <div id="tab-general" class="space-y-6">
-                <!-- Branding -->
-                <div class="bg-white p-4 rounded-xl shadow-sm">
-                    <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">Branding</h3>
-                    <div class="space-y-3">
-                        <label class="block">
-                            <span class="text-gray-700 text-sm">Dock Title</span>
-                            <input type="text" id="setting-title" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 text-sm" placeholder="AppDock">
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Appearance -->
-                <div class="bg-white p-4 rounded-xl shadow-sm">
-                    <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">Appearance</h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <span class="text-gray-700 text-sm block mb-2">Background Style</span>
-                            <div class="flex space-x-2">
-                                <button class="w-8 h-8 rounded-full border bg-gray-100 theme-bg-btn" data-type="color" data-val="#f3f4f6"></button>
-                                <button class="w-8 h-8 rounded-full border bg-blue-100 theme-bg-btn" data-type="color" data-val="#dbeafe"></button>
-                                <button class="w-8 h-8 rounded-full border bg-gray-800 theme-bg-btn" data-type="color" data-val="#1f2937"></button>
-                                <button class="w-8 h-8 rounded-full border bg-gradient-to-tr from-pink-300 to-purple-400 theme-bg-btn" data-type="grad" data-val="linear-gradient(to top right, #f9a8d4, #c084fc)"></button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <span class="text-gray-700 text-sm block mb-2">Grid Columns</span>
-                            <input type="range" id="setting-cols" min="3" max="5" step="1" class="w-full">
-                            <div class="flex justify-between text-xs text-gray-400">
-                                <span>3</span><span>4</span><span>5</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <span class="text-gray-700 text-sm block mb-2">Icon Size</span>
-                            <input type="range" id="setting-icons" min="1" max="3" step="1" class="w-full">
-                            <div class="flex justify-between text-xs text-gray-400">
-                                <span>Small</span><span>Med</span><span>Large</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab: Developer Tools -->
-            <div id="tab-developer" class="hidden space-y-4">
-                <button id="create-app-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl shadow-md font-medium active:scale-95 transition">
-                    <i class="fa-solid fa-plus mr-2"></i> Create New App
-                </button>
-
-                <div id="dev-app-list" class="space-y-3 mt-4">
-                    <!-- Dev App List Items Injected Here -->
-                </div>
-            </div>
+    <div id="view-library" class="view-container active">
+        <div id="quiz-list" class="card-grid"></div>
+        <div style="text-align: center; padding: 20px; color: var(--text-secondary); font-size: 14px;">
+            Tap + to add a new quiz
         </div>
     </div>
 
-    <!-- 4. App Editor Modal (Sub-modal of Settings) -->
-    <div id="editor-modal" class="fixed inset-0 z-[60] bg-white transform translate-y-full transition-transform duration-300 flex flex-col">
-        <div class="glass-nav h-14 px-4 flex items-center justify-between border-b shrink-0">
-            <button id="editor-close-btn" class="text-gray-600">Cancel</button>
-            <span class="font-semibold" id="editor-app-name">Edit App</span>
-            <button id="editor-save-btn" class="text-blue-600 font-bold">Done</button>
-        </div>
-        
-        <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
-            <!-- App Metadata -->
-            <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
-                <label class="block mb-2 text-sm font-medium">App Name</label>
-                <input type="text" id="edit-app-name" class="w-full border p-2 rounded mb-3">
-                
-                <label class="block mb-2 text-sm font-medium">Icon</label>
-                <div class="flex gap-2 mb-1">
-                    <input type="text" id="edit-app-icon" class="flex-1 border p-2 rounded text-sm" placeholder="https://... or 🚀">
-                    <label class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded border flex items-center justify-center transition" title="Upload Image">
-                        <i class="fa-solid fa-image"></i>
-                        <input type="file" id="icon-file-input" accept="image/*" class="hidden">
+    <div id="view-files" class="view-container">
+        <div class="list-group" style="margin-top: 0;">
+            <div class="list-item">
+                <div class="flex gap-2" style="width: 100%;">
+                    <label class="btn btn-outline" style="flex:1; padding: 8px; font-size: 14px;">
+                        Import
+                        <input type="file" hidden accept=".json" onchange="handleImport(this)" multiple>
                     </label>
+                    <button onclick="exportAll()" class="btn btn-outline" style="flex:1; padding: 8px; font-size: 14px;">Export</button>
+                    <button onclick="bulkDelete()" class="btn btn-danger" style="flex:1; padding: 8px; font-size: 14px;">Delete</button>
                 </div>
-                <p class="text-xs text-gray-400">Enter an Emoji, Image URL, or upload a file.</p>
             </div>
+            <div class="list-header flex justify-between">
+                <span>Stored Quizzes (IndexedDB)</span>
+                <span onclick="selectAllFiles()" style="color:var(--blue);cursor:pointer;">Select All</span>
+            </div>
+        </div>
+        <div id="file-list-container"></div>
+    </div>
 
-            <!-- File Manager -->
-            <div class="bg-white p-4 rounded-xl shadow-sm flex-1">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold">Files</h3>
-                    <button id="add-file-btn" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded">
-                        <i class="fa-solid fa-file-circle-plus mr-1"></i> Add File
-                    </button>
-                </div>
-                
-                <div id="file-list" class="space-y-2">
-                    <!-- File Items Injected Here -->
-                </div>
+    <div id="view-settings" class="view-container">
+        <div class="list-header">Appearance</div>
+        <div class="list-group">
+            <div class="list-item">
+                <span>Dark Mode</span>
+                <label class="switch"><input type="checkbox" id="dark-mode-toggle" onchange="toggleTheme(this.checked)"><span class="slider"></span></label>
+            </div>
+            <div class="list-item" style="flex-direction: column; align-items: flex-start;">
+                <span style="margin-bottom: 8px;">Font Size</span>
+                <input type="range" style="width:100%" min="0.8" max="1.3" step="0.1" id="font-slider" onchange="setFontSize(this.value)">
+            </div>
+        </div>
+        <div class="list-header">Developer Tools</div>
+        <div class="list-group">
+            <div class="list-item" style="display: block;">
+                <textarea id="json-paste" rows="5" placeholder="Paste Raw JSON here..." style="font-family: monospace; font-size: 12px;"></textarea>
+                <button onclick="importRaw()" class="btn" style="margin-top: 8px;">Import Raw JSON</button>
+            </div>
+        </div>
+        <div class="list-group">
+            <div class="list-item" onclick="deleteAllData()" style="justify-content: center; cursor: pointer;">
+                <span style="color: var(--danger); font-weight: 600;">Reset Database</span>
             </div>
         </div>
     </div>
 
-    <!-- 5. Code Editor Modal -->
-    <div id="code-modal" class="fixed inset-0 z-[70] bg-gray-900 transform translate-x-full transition-transform duration-200 flex flex-col text-white">
-        <div class="h-12 bg-gray-800 flex items-center justify-between px-4 border-b border-gray-700">
-            <button id="code-back-btn" class="text-gray-300 hover:text-white"><i class="fa-solid fa-arrow-left"></i></button>
-            <span id="code-filename" class="font-mono text-sm">script.js</span>
-            <button id="code-save-btn" class="text-green-400 hover:text-green-300 font-bold text-sm">SAVE</button>
+    <nav class="tab-bar">
+        <div class="tab-item active" onclick="switchTab('library', this)">
+            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+            Library
         </div>
-        <textarea id="code-content" class="flex-1 bg-gray-900 text-gray-100 p-4 font-mono text-sm resize-none focus:outline-none w-full" spellcheck="false"></textarea>
-    </div>
+        <div class="tab-item" onclick="switchTab('files', this)">
+            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+            Files
+        </div>
+        <div class="tab-item" onclick="switchTab('settings', this)">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.04.17 0 .4.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.04-.22 0-.45-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            Settings
+        </div>
+    </nav>
 
-    <!-- 6. App Runner (Full Screen Overlay) -->
-    <div id="app-runner" class="fixed inset-0 z-30 bg-white transform translate-y-full transition-transform duration-300">
-        <!-- Floating Close Button Removed: Relies on Native Hardware Back Button -->
+    <div class="fab" id="fab-add" onclick="openEditor()">+</div>
+</div>
+
+<div id="overlay-editor" class="full-screen-overlay">
+    <div class="app-header" style="position: absolute;">
+        <button class="header-btn left" onclick="closeOverlay('overlay-editor')">Cancel</button>
+        <div class="header-title">Edit Quiz</div>
+        <button class="header-btn right" onclick="saveQuiz()">Save</button>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding: 76px 16px 20px;">
+        <div class="list-group" style="margin:0 0 20px 0;">
+            <div class="list-item">
+                <input type="text" id="edit-title" placeholder="Quiz Title" style="font-weight:700;">
+            </div>
+        </div>
+        <div id="edit-questions-list"></div>
+        <button onclick="addQuestion()" class="btn btn-outline" style="margin-top:20px; border-style:dashed;">+ Add Question</button>
+        <br><br>
+    </div>
+</div>
+
+<div id="overlay-start" class="full-screen-overlay" style="justify-content: flex-end; background: rgba(0,0,0,0.5);">
+    <div style="background: var(--bg-surface); border-radius: 20px 20px 0 0; padding: 24px; animation: slideUp 0.3s;">
+        <h2 style="margin: 0 0 20px 0;">Quiz Setup</h2>
+        <div class="flex gap-2 mb-4">
+            <div style="flex:1">
+                <label class="text-secondary text-xs uppercase font-bold">Time (Min)</label>
+                <input type="number" id="play-timer" placeholder="None" style="background: var(--bg-app);">
+            </div>
+            <div style="flex:1">
+                <label class="text-secondary text-xs uppercase font-bold">Penalty</label>
+                <select id="play-penalty" style="background: var(--bg-app);">
+                    <option value="0">None</option>
+                    <option value="0.25">-0.25</option>
+                    <option value="0.5">-0.50</option>
+                </select>
+            </div>
+        </div>
+        <div class="list-group" style="margin: 0 0 20px 0;">
+            <div class="list-item">
+                <span>Shuffle</span>
+                <label class="switch"><input type="checkbox" id="play-shuffle"><span class="slider"></span></label>
+            </div>
+            <div class="list-item">
+                <span>Exam Mode</span>
+                <label class="switch"><input type="checkbox" id="play-mode" checked><span class="slider"></span></label>
+            </div>
+        </div>
+        <button onclick="startQuiz()" class="btn">Start Quiz</button>
+        <button onclick="closeOverlay('overlay-start')" class="btn btn-outline" style="border:none; margin-top:10px;">Cancel</button>
+    </div>
+</div>
+
+<div id="overlay-player" class="full-screen-overlay">
+    <div class="app-header" style="position: absolute;">
+        <button class="header-btn left" onclick="closeOverlay('overlay-player')">Exit</button>
+        <div class="header-title" id="game-progress">Q 1/10</div>
+        <div class="header-btn right" id="game-timer-display" style="background: transparent; color: var(--text-main); box-shadow: none; pointer-events: none;"></div>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding: 76px 20px 100px;">
+        <div style="height:4px; background:var(--separator); border-radius:2px; margin-bottom:20px; overflow:hidden;">
+            <div id="game-bar" style="height:100%; width:0%; background:var(--blue); transition:width 0.3s;"></div>
+        </div>
+        <div id="game-paragraph" class="list-group hidden" style="margin:0 0 20px 0; background:#f0f9ff; border:1px solid #bae6fd;">
+            <div class="list-item" style="border:none; padding:16px;">
+                <p id="game-p-text" style="font-size:14px; line-height:1.5; color:#0c4a6e; margin:0;"></p>
+            </div>
+        </div>
+        <h2 id="game-q-text" style="font-size:20px; font-weight:700; margin-bottom:24px;"></h2>
+        <div id="game-options" class="flex-col gap-2 flex"></div>
+    </div>
+    <div style="position:absolute; bottom:0; left:0; right:0; padding:20px; background:var(--bg-tabbar); border-top:0.5px solid var(--separator); display: flex; gap: 10px;">
+        <button id="btn-prev" onclick="prevQ()" class="btn btn-outline" style="flex:1;">Prev</button>
+        <button id="btn-skip" onclick="skipQ()" class="btn btn-outline" style="flex:1;">Skip</button>
+        <button id="btn-next" onclick="nextQ()" class="btn" style="flex:2;">Next</button>
+    </div>
+</div>
+
+<div id="overlay-results" class="full-screen-overlay">
+    <div style="padding: 80px 20px; text-align: center; overflow-y: auto;">
+        <h1 id="res-score" style="font-size: 64px; margin:0; color:var(--blue);">0</h1>
+        <p class="text-secondary font-bold uppercase">Total Score</p>
         
-        <!-- The content is loaded into this iframe -->
-        <iframe id="app-frame" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+        <div class="card-grid" style="grid-template-columns: 1fr 1fr; margin-top:40px;">
+            <div class="quiz-card" style="align-items:center;">
+                <span class="text-success" style="font-size:24px; font-weight:700;" id="res-correct">0</span>
+                <span class="text-secondary text-xs uppercase">Correct</span>
+            </div>
+            <div class="quiz-card" style="align-items:center;">
+                <span class="text-danger" style="font-size:24px; font-weight:700;" id="res-wrong">0</span>
+                <span class="text-secondary text-xs uppercase">Wrong</span>
+            </div>
+            <div class="quiz-card" style="align-items:center;">
+                <span class="text-warning" style="font-size:24px; font-weight:700;" id="res-skip">0</span>
+                <span class="text-secondary text-xs uppercase">Skipped</span>
+            </div>
+            <div class="quiz-card" style="align-items:center;">
+                <span class="text-danger" style="font-size:24px; font-weight:700;" id="res-pen">0</span>
+                <span class="text-secondary text-xs uppercase">Penalty</span>
+            </div>
+        </div>
+        <button onclick="closeOverlay('overlay-results')" class="btn" style="margin-top:40px;">Done</button>
     </div>
+</div>
 
-    <!-- MAIN LOGIC -->
-    <script>
-        /**
-         * ----------------------------------------
-         * 1. IndexedDB Manager (The "Hard Drive")
-         * ----------------------------------------
-         */
-        const DB_NAME = 'AppDockDB';
-        const DB_VERSION = 1;
+<script>
+    /**
+     * INDEXED DB MANAGER
+     * Handles asynchronous storage using browser's native IndexedDB.
+     */
+    const DB_NAME = 'QuizMasterDB';
+    const DB_VERSION = 1;
+    const STORE_QUIZZES = 'quizzes';
+    const STORE_SETTINGS = 'settings';
 
-        const db = {
-            instance: null,
-            
-            init() {
-                return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(DB_NAME, DB_VERSION);
-                    
-                    request.onupgradeneeded = (e) => {
-                        const d = e.target.result;
-                        // Store Apps Metadata
-                        if (!d.objectStoreNames.contains('apps')) {
-                            d.createObjectStore('apps', { keyPath: 'id' });
-                        }
-                        // Store Files
-                        if (!d.objectStoreNames.contains('files')) {
-                            const store = d.createObjectStore('files', { keyPath: 'id' });
-                            store.createIndex('appId', 'appId', { unique: false });
-                        }
-                    };
-
-                    request.onsuccess = (e) => {
-                        this.instance = e.target.result;
-                        resolve(this.instance);
-                    };
-                    
-                    request.onerror = (e) => reject(e);
-                });
-            },
-
-            // Generic Transaction Helper
-            tx(storeName, mode) {
-                return this.instance.transaction(storeName, mode).objectStore(storeName);
-            },
-
-            // App CRUD
-            async getApps() {
-                return new Promise(resolve => {
-                    const req = this.tx('apps', 'readonly').getAll();
-                    req.onsuccess = () => resolve(req.result);
-                });
-            },
-            
-            async saveApp(app) {
-                return new Promise(resolve => {
-                    const req = this.tx('apps', 'readwrite').put(app);
-                    req.onsuccess = () => resolve(app);
-                });
-            },
-
-            async deleteApp(id) {
-                // Delete app metadata
-                await new Promise(r => this.tx('apps', 'readwrite').delete(id).onsuccess = r);
-                // Delete associated files
-                const files = await this.getFiles(id);
-                const tx = this.instance.transaction('files', 'readwrite');
-                const store = tx.objectStore('files');
-                files.forEach(f => store.delete(f.id));
-                return new Promise(r => tx.oncomplete = r);
-            },
-
-            // File CRUD
-            async getFiles(appId) {
-                return new Promise(resolve => {
-                    const store = this.tx('files', 'readonly');
-                    const index = store.index('appId');
-                    const req = index.getAll(appId);
-                    req.onsuccess = () => resolve(req.result);
-                });
-            },
-
-            async saveFile(file) {
-                return new Promise(resolve => {
-                    this.tx('files', 'readwrite').put(file).onsuccess = () => resolve(file);
-                });
-            },
-
-            async deleteFile(fileId) {
-                return new Promise(resolve => {
-                    this.tx('files', 'readwrite').delete(fileId).onsuccess = () => resolve();
-                });
-            }
-        };
-
-        /**
-         * ----------------------------------------
-         * 2. State & Settings Management
-         * ----------------------------------------
-         */
-        const state = {
-            apps: [],
-            currentAppId: null, // For editor
-            settings: JSON.parse(localStorage.getItem('appdock_settings')) || {
-                title: 'AppDock',
-                bgColor: '#f3f4f6',
-                bgGradient: '',
-                cols: 3,
-                iconSize: 2 // 1=sm, 2=md, 3=lg
-            }
-        };
-
-        function saveSettings() {
-            localStorage.setItem('appdock_settings', JSON.stringify(state.settings));
-            applySettings();
-        }
-
-        function applySettings() {
-            // Apply Title
-            document.getElementById('app-title').innerText = state.settings.title;
-            document.getElementById('setting-title').value = state.settings.title;
-
-            // Apply Background
-            if (state.settings.bgGradient) {
-                document.body.style.background = state.settings.bgGradient;
-            } else {
-                document.body.style.background = '';
-                document.body.style.backgroundColor = state.settings.bgColor;
-            }
-            document.documentElement.style.setProperty('--bg-color', state.settings.bgColor);
-
-            // Apply Grid Cols
-            const grid = document.getElementById('apps-grid');
-            grid.className = `grid gap-6 justify-items-center transition-all grid-${state.settings.cols}`;
-            document.getElementById('setting-cols').value = state.settings.cols;
-
-            // Apply Icon Size
-            document.documentElement.style.setProperty('--icon-size', 
-                state.settings.iconSize == 1 ? '2.5rem' : 
-                state.settings.iconSize == 3 ? '4.5rem' : '3.5rem'
-            );
-            document.getElementById('setting-icons').value = state.settings.iconSize;
-        }
-
-        /**
-         * ----------------------------------------
-         * 3. User Interface Manager
-         * ----------------------------------------
-         */
-        const UI = {
-            screens: {
-                home: document.getElementById('app-drawer'),
-                settings: document.getElementById('settings-modal'),
-                runner: document.getElementById('app-runner'),
-                editor: document.getElementById('editor-modal'),
-                code: document.getElementById('code-modal')
-            },
-            
-            async renderHome() {
-                const grid = document.getElementById('apps-grid');
-                grid.innerHTML = '';
-                state.apps = await db.getApps();
-
-                if (state.apps.length === 0) {
-                    document.getElementById('empty-state').classList.remove('hidden');
-                } else {
-                    document.getElementById('empty-state').classList.add('hidden');
-                    state.apps.forEach(app => {
-                        const el = document.createElement('div');
-                        el.className = 'flex flex-col items-center gap-2 cursor-pointer active:opacity-60 transition';
-                        el.onclick = () => Runner.launch(app.id);
-
-                        // Icon handling (Image URL or Emoji)
-                        let iconHtml = '';
-                        if (app.icon.startsWith('http') || app.icon.startsWith('data:')) {
-                            iconHtml = `<img src="${app.icon}" class="rounded-xl shadow-lg object-cover bg-white" style="width: var(--icon-size); height: var(--icon-size);">`;
-                        } else {
-                            // Assume Emoji or Text
-                            iconHtml = `<div class="flex items-center justify-center rounded-xl shadow-lg bg-white text-2xl" style="width: var(--icon-size); height: var(--icon-size);">${app.icon || '📱'}</div>`;
-                        }
-
-                        el.innerHTML = `
-                            ${iconHtml}
-                            <span class="text-xs font-medium text-gray-700 truncate w-20 text-center select-none">${app.name}</span>
-                        `;
-                        grid.appendChild(el);
-                    });
-                }
-            },
-
-            renderDevList() {
-                const list = document.getElementById('dev-app-list');
-                list.innerHTML = '';
-                state.apps.forEach(app => {
-                    const item = document.createElement('div');
-                    item.className = 'flex items-center justify-between bg-white p-3 rounded-lg shadow-sm';
-                    item.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-lg overflow-hidden">
-                                ${app.icon.startsWith('http') || app.icon.startsWith('data:') ? `<img src="${app.icon}" class="w-full h-full object-cover">` : (app.icon || '📱')}
-                            </div>
-                            <span class="font-medium text-gray-800">${app.name}</span>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="Editor.open('${app.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="Editor.deleteApp('${app.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    `;
-                    list.appendChild(item);
-                });
-            },
-
-            openSettings() {
-                this.screens.settings.classList.remove('translate-x-full');
-                history.pushState({view: 'settings'}, 'Settings', '#settings');
-                this.renderDevList();
-            },
-
-            closeSettings() {
-                this.screens.settings.classList.add('translate-x-full');
-            },
-
-            openRunner() {
-                this.screens.runner.classList.remove('translate-y-full');
-                // Hide Navbar for fullscreen
-                document.getElementById('navbar').classList.add('-translate-y-full');
-                
-                document.getElementById('settings-btn').classList.add('hidden');
-                history.pushState({view: 'runner'}, 'App', '#run');
-            },
-
-            closeRunner() {
-                this.screens.runner.classList.add('translate-y-full');
-                // Show Navbar
-                document.getElementById('navbar').classList.remove('-translate-y-full');
-
-                // Clean iframe
-                document.getElementById('app-frame').src = 'about:blank';
-                document.getElementById('settings-btn').classList.remove('hidden');
-            }
-        };
-
-        /**
-         * ----------------------------------------
-         * 4. Editor & File Manager
-         * ----------------------------------------
-         */
-        const Editor = {
-            currentFileId: null,
-
-            async open(appId) {
-                state.currentAppId = appId;
-                const app = state.apps.find(a => a.id === appId);
-                
-                // Populate Meta
-                document.getElementById('edit-app-name').value = app.name;
-                document.getElementById('edit-app-icon').value = app.icon;
-                // clear file input
-                document.getElementById('icon-file-input').value = '';
-                
-                document.getElementById('editor-app-name').innerText = 'Edit ' + app.name;
-
-                await this.refreshFileList();
-                
-                UI.screens.editor.classList.remove('translate-y-full');
-            },
-
-            async createNewApp() {
-                const newApp = {
-                    id: crypto.randomUUID(),
-                    name: 'New App',
-                    icon: '🚀',
-                    entryFileId: null
-                };
-                
-                // Create default index.html
-                const indexFile = {
-                    id: crypto.randomUUID(),
-                    appId: newApp.id,
-                    name: 'index.html',
-                    content: '<h1>Hello World</h1>\n<p>Welcome to my new app!</p>',
-                    type: 'text/html'
-                };
-                newApp.entryFileId = indexFile.id;
-
-                await db.saveApp(newApp);
-                await db.saveFile(indexFile);
-                
-                state.apps = await db.getApps(); // refresh global state
-                UI.renderDevList(); // refresh dev list
-                this.open(newApp.id); // open editor
-            },
-
-            async deleteApp(id) {
-                if(confirm('Delete this app permanently?')) {
-                    await db.deleteApp(id);
-                    state.apps = await db.getApps();
-                    UI.renderDevList();
-                    UI.renderHome();
-                }
-            },
-
-            async refreshFileList() {
-                const list = document.getElementById('file-list');
-                list.innerHTML = '';
-                const files = await db.getFiles(state.currentAppId);
-                const app = state.apps.find(a => a.id === state.currentAppId);
-
-                files.forEach(file => {
-                    const isEntry = app.entryFileId === file.id;
-                    const el = document.createElement('div');
-                    el.className = `flex items-center justify-between p-2 rounded border ${isEntry ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`;
-                    el.innerHTML = `
-                        <div class="flex items-center gap-2 overflow-hidden">
-                            <i class="fa-regular fa-file-code text-gray-500"></i>
-                            <span class="text-sm font-mono truncate ${isEntry ? 'font-bold text-blue-700':''}">${file.name}</span>
-                            ${isEntry ? '<span class="text-[10px] bg-blue-600 text-white px-1 rounded">MAIN</span>' : ''}
-                        </div>
-                        <div class="flex gap-1">
-                            ${!isEntry ? `<button title="Set as Entry" onclick="Editor.setEntry('${file.id}')" class="p-1 hover:text-blue-600"><i class="fa-solid fa-play"></i></button>` : ''}
-                            <button onclick="Editor.editFile('${file.id}')" class="p-1 hover:text-gray-900"><i class="fa-solid fa-pen"></i></button>
-                            ${!isEntry ? `<button onclick="Editor.deleteFile('${file.id}')" class="p-1 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>` : ''}
-                        </div>
-                    `;
-                    list.appendChild(el);
-                });
-            },
-
-            async setEntry(fileId) {
-                const app = state.apps.find(a => a.id === state.currentAppId);
-                app.entryFileId = fileId;
-                await db.saveApp(app);
-                this.refreshFileList();
-            },
-
-            async editFile(fileId) {
-                this.currentFileId = fileId;
-                const files = await db.getFiles(state.currentAppId);
-                const file = files.find(f => f.id === fileId);
-                
-                document.getElementById('code-filename').innerText = file.name;
-                document.getElementById('code-content').value = file.content;
-                
-                UI.screens.code.classList.remove('translate-x-full');
-            },
-
-            async saveCurrentFile() {
-                const content = document.getElementById('code-content').value;
-                const files = await db.getFiles(state.currentAppId);
-                const file = files.find(f => f.id === this.currentFileId);
-                file.content = content;
-                await db.saveFile(file);
-                UI.screens.code.classList.add('translate-x-full');
-            },
-
-            async addFile() {
-                const name = prompt("Filename (e.g., style.css):", "new_file.html");
-                if (!name) return;
-                
-                const newFile = {
-                    id: crypto.randomUUID(),
-                    appId: state.currentAppId,
-                    name: name,
-                    content: '/* New File */',
-                    type: name.endsWith('.js') ? 'text/javascript' : (name.endsWith('.css') ? 'text/css' : 'text/html')
-                };
-                await db.saveFile(newFile);
-                this.refreshFileList();
-            },
-
-            async deleteFile(id) {
-                if(confirm('Delete file?')) {
-                    await db.deleteFile(id);
-                    this.refreshFileList();
-                }
-            },
-
-            async saveAppMeta() {
-                const app = state.apps.find(a => a.id === state.currentAppId);
-                app.name = document.getElementById('edit-app-name').value;
-                app.icon = document.getElementById('edit-app-icon').value;
-                await db.saveApp(app);
-                
-                // Close Modal
-                UI.screens.editor.classList.add('translate-y-full');
-                UI.renderDevList();
-                UI.renderHome();
-            }
-        };
-
-        /**
-         * ----------------------------------------
-         * 5. App Runner (The "Kernel")
-         * ----------------------------------------
-         */
-        const Runner = {
-            async launch(appId) {
-                const app = state.apps.find(a => a.id === appId);
-                if (!app || !app.entryFileId) {
-                    alert('App is corrupted or has no entry file.');
-                    return;
-                }
-
-                // Get all files for this app
-                const files = await db.getFiles(appId);
-                const entryFile = files.find(f => f.id === app.entryFileId);
-
-                if (!entryFile) {
-                    alert('Entry file not found.');
-                    return;
-                }
-
-                // ---------------------------------------------------------
-                // Basic Dependency Injection Logic for Single-File simulation
-                // ---------------------------------------------------------
-                // Ideally we use a Service Worker to intercept requests, 
-                // but for a simple local runner, we'll assume the user
-                // mostly writes single files or we can try to inject blobs.
-                // Here, we just serve the Main Entry. 
-                // ---------------------------------------------------------
-
-                let finalContent = entryFile.content;
-
-                // Simple rudimentary CSS/JS injection if linked relatively
-                // (Note: This is a basic implementation. A full OS needs a SW Proxy)
-                const cssFiles = files.filter(f => f.type === 'text/css');
-                const jsFiles = files.filter(f => f.type === 'text/javascript');
-
-                // Auto-inject CSS if not present
-                // This is a helper for "easy mode" apps
-                cssFiles.forEach(css => {
-                    // if content doesn't have link, inject style tag
-                    if (!finalContent.includes(css.name)) {
-                        finalContent += `\n<style>\n/* ${css.name} */\n${css.content}\n</style>`;
+    const dbManager = {
+        db: null,
+        
+        open: function() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_QUIZZES)) {
+                        db.createObjectStore(STORE_QUIZZES, { keyPath: 'id' });
                     }
-                });
+                    if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
+                        db.createObjectStore(STORE_SETTINGS, { keyPath: 'key' });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    this.db = e.target.result;
+                    resolve(this.db);
+                };
+                request.onerror = (e) => reject('DB Error: ' + e.target.error);
+            });
+        },
 
-                // Create Blob
-                const blob = new Blob([finalContent], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
+        getAllQuizzes: function() {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(STORE_QUIZZES, 'readonly');
+                const store = tx.objectStore(STORE_QUIZZES);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        },
 
-                const frame = document.getElementById('app-frame');
-                frame.src = url;
+        saveQuiz: function(quiz) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(STORE_QUIZZES, 'readwrite');
+                const store = tx.objectStore(STORE_QUIZZES);
+                const req = store.put(quiz);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        },
 
-                UI.openRunner();
-            }
-        };
+        deleteQuiz: function(id) {
+            return new Promise((resolve, reject) => {
+                const tx = this.db.transaction(STORE_QUIZZES, 'readwrite');
+                const store = tx.objectStore(STORE_QUIZZES);
+                const req = store.delete(id);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        },
 
-        /**
-         * ----------------------------------------
-         * 6. Event Wiring & Initialization
-         * ----------------------------------------
-         */
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Init DB
-            await db.init();
+        getSettings: function() {
+            return new Promise((resolve) => {
+                const tx = this.db.transaction(STORE_SETTINGS, 'readonly');
+                const store = tx.objectStore(STORE_SETTINGS);
+                const req = store.get('app_settings');
+                req.onsuccess = () => resolve(req.result ? req.result.value : null);
+                req.onerror = () => resolve(null);
+            });
+        },
+
+        saveSettings: function(settings) {
+            const tx = this.db.transaction(STORE_SETTINGS, 'readwrite');
+            const store = tx.objectStore(STORE_SETTINGS);
+            store.put({ key: 'app_settings', value: settings });
+        },
+
+        clearAll: function() {
+            return new Promise((resolve) => {
+                const tx = this.db.transaction([STORE_QUIZZES, STORE_SETTINGS], 'readwrite');
+                tx.objectStore(STORE_QUIZZES).clear();
+                tx.objectStore(STORE_SETTINGS).clear();
+                tx.oncomplete = () => resolve();
+            });
+        }
+    };
+
+    // --- STATE ---
+    // We keep a local copy in memory for UI rendering, but sync with IDB
+    let quizzes = []; 
+    let settings = { darkMode: false, fontSize: 1 };
+    
+    let activeQuiz, editState, playSession, selectedFiles = new Set();
+
+    // --- INIT ---
+    async function init() {
+        try {
+            await dbManager.open();
             
             // Load Settings
+            const savedSettings = await dbManager.getSettings();
+            if (savedSettings) settings = savedSettings;
             applySettings();
 
-            // Initial Render
-            await UI.renderHome();
-
-            // Service Worker Registration
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('SW Registered', reg))
-                    .catch(err => console.log('SW Failed', err));
-            }
-
-            // Navigation Events
-            document.getElementById('settings-btn').onclick = () => UI.openSettings();
-            document.getElementById('back-btn').onclick = () => {
-                UI.closeSettings();
-                history.back(); // to sync state
-            };
+            // Load Quizzes
+            await refreshLocalData();
             
-            // Floating Close Button Logic Removed
+            // Initial Render
+            switchTab('library', document.querySelector('.tab-item:first-child'));
+        } catch (e) {
+            console.error("Initialization Failed:", e);
+            alert("Could not open Database. Please ensure you are not in Incognito mode or that your browser supports IndexedDB.");
+        }
+    }
 
-            // Image Upload Logic
-            document.getElementById('icon-file-input').onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (evt) => {
-                        // Store Base64 directly in the text input so it saves with saveAppMeta
-                        document.getElementById('edit-app-icon').value = evt.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
+    async function refreshLocalData() {
+        quizzes = await dbManager.getAllQuizzes();
+        // Sort by newest first based on ID (timestamp)
+        quizzes.sort((a, b) => b.id - a.id); 
+    }
 
-            // Tab Switching
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.onclick = (e) => {
-                    // Reset styling
-                    document.querySelectorAll('.tab-btn').forEach(b => {
-                        b.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-                        b.classList.add('text-gray-500');
-                    });
-                    // Active styling
-                    e.target.classList.remove('text-gray-500');
-                    e.target.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-                    
-                    // Show Content
-                    const tab = e.target.dataset.tab;
-                    document.getElementById('tab-general').classList.add('hidden');
-                    document.getElementById('tab-developer').classList.add('hidden');
-                    document.getElementById(`tab-${tab}`).classList.remove('hidden');
-                };
-            });
+    // --- NAVIGATION ---
+    function switchTab(tabId, el) {
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        document.getElementById(`view-${tabId}`).classList.add('active');
+        if(el) el.classList.add('active');
+        
+        const titles = { 'library': 'My Library', 'files': 'File Manager', 'settings': 'Settings' };
+        document.getElementById('nav-title').innerText = titles[tabId];
+        document.getElementById('fab-add').style.display = tabId === 'library' ? 'flex' : 'none';
+        
+        if(tabId === 'library') renderLibrary();
+        if(tabId === 'files') renderFiles();
+    }
 
-            // Settings Inputs
-            document.getElementById('setting-title').oninput = (e) => {
-                state.settings.title = e.target.value;
-                saveSettings();
-            };
-            document.getElementById('setting-cols').oninput = (e) => {
-                state.settings.cols = e.target.value;
-                saveSettings();
-            };
-            document.getElementById('setting-icons').oninput = (e) => {
-                state.settings.iconSize = e.target.value;
-                saveSettings();
-            };
-            document.querySelectorAll('.theme-bg-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const type = btn.dataset.type;
-                    const val = btn.dataset.val;
-                    if(type === 'grad') {
-                        state.settings.bgGradient = val;
-                        state.settings.bgColor = '#f3f4f6';
-                    } else {
-                        state.settings.bgGradient = '';
-                        state.settings.bgColor = val;
-                    }
-                    saveSettings();
-                };
-            });
+    function openOverlay(id) { document.getElementById(id).classList.add('open'); }
+    function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
 
-            // Developer Events
-            document.getElementById('create-app-btn').onclick = () => Editor.createNewApp();
-            document.getElementById('editor-close-btn').onclick = () => UI.screens.editor.classList.add('translate-y-full');
-            document.getElementById('editor-save-btn').onclick = () => Editor.saveAppMeta();
-            document.getElementById('add-file-btn').onclick = () => Editor.addFile();
-
-            // Code Editor Events
-            document.getElementById('code-back-btn').onclick = () => UI.screens.code.classList.add('translate-x-full');
-            document.getElementById('code-save-btn').onclick = () => Editor.saveCurrentFile();
-
-            // History API handling for Back Button
-            window.onpopstate = (e) => {
-                // If we pressed back but modals are open, close them manually
-                if (UI.screens.runner.classList.contains('translate-y-full') === false) {
-                    UI.closeRunner();
-                }
-                if (UI.screens.settings.classList.contains('translate-x-full') === false) {
-                    UI.closeSettings();
-                }
-            };
+    // --- LIBRARY ---
+    function renderLibrary() {
+        const list = document.getElementById('quiz-list'); list.innerHTML = '';
+        if(!quizzes.length) { list.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">No Quizzes Found.<br>Tap + to create one.</div>'; return; }
+        
+        quizzes.forEach((q, i) => {
+            const card = document.createElement('div'); card.className = 'quiz-card';
+            card.innerHTML = `
+                <div style="font-weight:700; font-size:18px; margin-bottom:4px;">${q.title}</div>
+                <div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">${q.questions.length} Questions</div>
+                <div class="flex gap-2">
+                    <button onclick="prepStart(${i})" class="btn" style="padding:10px; font-size:14px;">Play</button>
+                    <button onclick="prepEdit(${i})" class="btn btn-outline" style="padding:10px; font-size:14px;">Edit</button>
+                </div>`;
+            list.appendChild(card);
         });
-    </script>
+    }
+
+    // --- FILES ---
+    function renderFiles() {
+        const div = document.getElementById('file-list-container'); div.innerHTML = '';
+        selectedFiles.clear();
+        quizzes.forEach((q, i) => {
+            const item = document.createElement('div'); item.className = 'file-item';
+            item.innerHTML = `
+                <input type="checkbox" onchange="toggleSel(${i}, this.checked)" style="width:20px;height:20px;">
+                <div style="flex:1;">
+                    <div style="font-weight:600;">${q.title}</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">ID: ${q.id}</div>
+                </div>`;
+            div.appendChild(item);
+        });
+    }
+
+    function toggleSel(i, c) { if(c) selectedFiles.add(i); else selectedFiles.delete(i); }
+    function selectAllFiles() { document.querySelectorAll('#file-list-container input').forEach(c=>{c.checked=true; c.onchange({target:c}); toggleSel(Array.from(c.parentNode.parentNode.children).indexOf(c.parentNode), true);}); }
+    
+    async function bulkDelete() {
+        if(!selectedFiles.size) return;
+        if(!confirm(`Delete ${selectedFiles.size} items?`)) return;
+        
+        const idxs = Array.from(selectedFiles);
+        // We must delete by ID, not index
+        for (let i of idxs) {
+            await dbManager.deleteQuiz(quizzes[i].id);
+        }
+        await refreshLocalData();
+        renderFiles();
+    }
+
+    function exportAll() {
+        const blob = new Blob([JSON.stringify(quizzes)], {type:'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'quiz_backup.json'; a.click();
+    }
+
+    function handleImport(inp) {
+        Array.from(inp.files).forEach(f => {
+            const r = new FileReader();
+            r.onload = async e => { 
+                try {
+                    const d = JSON.parse(e.target.result);
+                    const list = Array.isArray(d) ? d : [d];
+                    for (let q of list) {
+                        q.id = Date.now() + Math.random(); // Ensure new ID on import
+                        await dbManager.saveQuiz(q);
+                    }
+                    await refreshLocalData();
+                    renderFiles();
+                    alert('Import Successful');
+                } catch(x){ alert('Invalid JSON'); }
+            };
+            r.readAsText(f);
+        });
+    }
+
+    // --- EDITOR ---
+    function openEditor() { 
+        editState = { id: Date.now(), title:'', questions:[] }; 
+        renderEditor(); 
+        openOverlay('overlay-editor'); 
+    }
+    
+    function prepEdit(i) { 
+        // Deep copy to avoid editing the array directly before saving
+        editState = JSON.parse(JSON.stringify(quizzes[i])); 
+        renderEditor(); 
+        openOverlay('overlay-editor'); 
+    }
+    
+    function renderEditor() {
+        document.getElementById('edit-title').value = editState.title;
+        const list = document.getElementById('edit-questions-list'); list.innerHTML = '';
+        editState.questions.forEach((q, idx) => {
+            const wrap = document.createElement('div'); wrap.className = 'list-group';
+            wrap.innerHTML = `
+                <div class="list-header flex justify-between"><span>Question ${idx+1}</span><span style="color:red;" onclick="delQ(${idx})">Delete</span></div>
+                <div class="list-item"><textarea oninput="updQ(${idx},'text',this.value)" rows="2" placeholder="Question Text">${q.text}</textarea></div>
+                <div class="list-item"><textarea oninput="updQ(${idx},'paragraph',this.value)" rows="2" placeholder="Optional Paragraph">${q.paragraph||''}</textarea></div>
+                ${q.options.map((o,i)=>`<div class="list-item"><input type="radio" name="eo${idx}" ${q.correct===i?'checked':''} onchange="updQ(${idx},'correct',${i})"><input style="margin-left:10px;" value="${o}" oninput="updOpt(${idx},${i},this.value)" placeholder="Option ${i+1}"></div>`).join('')}
+            `;
+            list.appendChild(wrap);
+        });
+    }
+
+    function addQuestion() { editState.questions.push({text:'', options:['','','',''], correct:0}); renderEditor(); }
+    function delQ(i) { editState.questions.splice(i,1); renderEditor(); }
+    function updQ(i,k,v) { editState.questions[i][k]=v; }
+    function updOpt(qi,oi,v) { editState.questions[qi].options[oi]=v; }
+    
+    async function saveQuiz() {
+        editState.title = document.getElementById('edit-title').value || 'Untitled';
+        
+        await dbManager.saveQuiz(editState);
+        await refreshLocalData(); // Sync DB to RAM
+        
+        closeOverlay('overlay-editor'); 
+        renderLibrary();
+    }
+
+    // --- PLAYER ---
+    function prepStart(i) { activeQuiz = quizzes[i]; openOverlay('overlay-start'); }
+    
+    function startQuiz() {
+        closeOverlay('overlay-start');
+        const tm = parseInt(document.getElementById('play-timer').value);
+        playSession = {
+            qIdxs: [...Array(activeQuiz.questions.length).keys()], curr: 0, ans: [],
+            timer: tm ? tm*60 : null, left: tm ? tm*60 : 0,
+            penalty: parseFloat(document.getElementById('play-penalty').value),
+            shuffle: document.getElementById('play-shuffle').checked,
+            examMode: document.getElementById('play-mode').checked
+        };
+        if(playSession.shuffle) playSession.qIdxs.sort(()=>Math.random()-0.5);
+        if(playSession.timer) startTimer();
+        openOverlay('overlay-player'); loadQ();
+    }
+
+    function startTimer() {
+        document.getElementById('game-timer-display').innerText = fmtTime(playSession.left);
+        playSession.timerId = setInterval(() => {
+            playSession.left--;
+            document.getElementById('game-timer-display').innerText = fmtTime(playSession.left);
+            if(playSession.left <= 0) finishGame();
+        }, 1000);
+    }
+    function fmtTime(s) { return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; }
+    
+    function loadQ() {
+        const qIdx = playSession.qIdxs[playSession.curr];
+        const q = activeQuiz.questions[qIdx];
+        document.getElementById('game-progress').innerText = `Q ${playSession.curr+1}/${playSession.qIdxs.length}`;
+        document.getElementById('game-bar').style.width = `${((playSession.curr)/playSession.qIdxs.length)*100}%`;
+        document.getElementById('game-q-text').innerText = q.text;
+        
+        const pBox = document.getElementById('game-paragraph');
+        if(q.paragraph) { pBox.classList.remove('hidden'); document.getElementById('game-p-text').innerText = q.paragraph; }
+        else pBox.classList.add('hidden');
+        const opts = document.getElementById('game-options'); opts.innerHTML = '';
+        
+        const existingAns = playSession.ans.find(a => a.q === qIdx);
+        
+        q.options.forEach((o, i) => {
+            const btn = document.createElement('button'); btn.className = 'btn btn-outline';
+            btn.style.textAlign='left'; btn.style.justifyContent='flex-start'; btn.innerText = o;
+            
+            if(existingAns) {
+                if(i === existingAns.c) {
+                    if (playSession.examMode) {
+                        btn.style.background = 'var(--blue)'; btn.style.color = 'white';
+                    } else if (existingAns.ok) {
+                        btn.style.background = 'var(--success)'; btn.style.color = 'white'; btn.style.borderColor='transparent';
+                    } else {
+                        btn.style.background = 'var(--danger)'; btn.style.color = 'white'; btn.style.borderColor='transparent';
+                    }
+                } else if (!playSession.examMode && !existingAns.ok && i === q.correct) {
+                    btn.style.background = 'var(--success)'; btn.style.color = 'white'; btn.style.borderColor='transparent';
+                }
+                if (!playSession.examMode) btn.disabled = true;
+            }
+            btn.onclick = () => handleAns(i, btn, q.correct);
+            opts.appendChild(btn);
+        });
+
+        document.getElementById('btn-prev').disabled = (playSession.curr === 0);
+        
+        if (playSession.curr === playSession.qIdxs.length - 1) {
+            document.getElementById('btn-next').innerText = "Finish";
+        } else {
+            document.getElementById('btn-next').innerText = "Next";
+        }
+        
+        if (!playSession.examMode) {
+             if(existingAns) {
+                 document.getElementById('btn-next').style.display = 'block';
+                 document.getElementById('btn-skip').style.display = 'none';
+             } else {
+                 document.getElementById('btn-next').style.display = 'none';
+                 document.getElementById('btn-skip').style.display = 'block';
+             }
+        } else {
+            document.getElementById('btn-next').style.display = 'block';
+            document.getElementById('btn-skip').style.display = existingAns ? 'none' : 'block';
+        }
+    }
+
+    function handleAns(c, btn, cor) {
+        const qIdx = playSession.qIdxs[playSession.curr];
+        const existingIdx = playSession.ans.findIndex(a => a.q === qIdx);
+        if (existingIdx > -1) playSession.ans[existingIdx] = {q: qIdx, c: c, ok: c===cor};
+        else playSession.ans.push({q: qIdx, c: c, ok: c===cor});
+
+        if(!playSession.examMode) {
+            Array.from(document.getElementById('game-options').children).forEach(b=>b.disabled=true);
+            if(c===cor) { btn.style.background='var(--success)'; btn.style.color='white'; btn.style.borderColor='transparent'; }
+            else { 
+                btn.style.background='var(--danger)'; btn.style.color='white'; btn.style.borderColor='transparent'; 
+                document.getElementById('game-options').children[cor].style.background='var(--success)'; document.getElementById('game-options').children[cor].style.color='white'; 
+            }
+            document.getElementById('btn-next').style.display='block'; 
+            document.getElementById('btn-skip').style.display='none';
+        } else {
+            Array.from(document.getElementById('game-options').children).forEach(b => {
+                b.style.background = 'transparent'; b.style.color = 'var(--blue)';
+            });
+            btn.style.background = 'var(--blue)'; btn.style.color = 'white';
+            document.getElementById('btn-skip').style.display='none';
+        }
+    }
+    
+    function prevQ() { if(playSession.curr > 0) { playSession.curr--; loadQ(); } }
+    
+    function skipQ() { 
+        const qIdx = playSession.qIdxs[playSession.curr];
+        const existingIdx = playSession.ans.findIndex(a => a.q === qIdx);
+        if (existingIdx > -1) playSession.ans.splice(existingIdx, 1);
+        playSession.ans.push({q:qIdx, c:-1, ok:false, skip:true}); 
+        nextQ(); 
+    }
+    
+    function nextQ() { 
+        if(playSession.curr < playSession.qIdxs.length-1) { playSession.curr++; loadQ(); } 
+        else { finishGame(); }
+    }
+    
+    function finishGame() {
+        if(playSession.timerId) clearInterval(playSession.timerId);
+        closeOverlay('overlay-player');
+        let c=0, w=0, s=0;
+        playSession.ans.forEach(a => { if(a.skip) s++; else if(a.ok) c++; else w++; });
+        document.getElementById('res-score').innerText = (c - (w * playSession.penalty)).toFixed(2);
+        document.getElementById('res-correct').innerText = c;
+        document.getElementById('res-wrong').innerText = w;
+        document.getElementById('res-skip').innerText = s;
+        document.getElementById('res-pen').innerText = (w * playSession.penalty).toFixed(2);
+        openOverlay('overlay-results');
+    }
+
+    // --- SYSTEM ---
+    function toggleTheme(c) { 
+        settings.darkMode = c; 
+        dbManager.saveSettings(settings); 
+        applySettings(); 
+    }
+    function setFontSize(v) { 
+        settings.fontSize = v; 
+        dbManager.saveSettings(settings); 
+        applySettings(); 
+    }
+    function applySettings() {
+        if(settings.darkMode) document.documentElement.setAttribute('data-theme', 'dark'); else document.documentElement.removeAttribute('data-theme');
+        document.documentElement.style.setProperty('--font-scale', settings.fontSize);
+        document.getElementById('dark-mode-toggle').checked = settings.darkMode;
+        document.getElementById('font-slider').value = settings.fontSize;
+    }
+    async function importRaw() { 
+        try { 
+            const d=JSON.parse(document.getElementById('json-paste').value); 
+            const list = Array.isArray(d) ? d : [d];
+            for(let q of list) { q.id = Date.now() + Math.random(); await dbManager.saveQuiz(q); }
+            await refreshLocalData();
+            alert('Imported!'); 
+        } catch(e){alert('Error');} 
+    }
+    async function deleteAllData() { 
+        if(confirm('Reset all Application Data? This cannot be undone.')) { 
+            await dbManager.clearAll();
+            location.reload(); 
+        } 
+    }
+
+    // Start App
+    init();
+
+</script>
 </body>
-  </html>
+                    </html>
