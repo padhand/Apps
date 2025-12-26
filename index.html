@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AppDock</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Core System Styles */
+        :root {
+            --bg-color: #f3f4f6;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --text-color: #1f2937;
+            --nav-bg: rgba(255, 255, 255, 0.9);
+            --icon-size: 3rem; /* Medium default */
+        }
+
+        body {
+            background: var(--bg-color);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+            overscroll-behavior-y: none; /* Prevent pull-to-refresh */
+        }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-nav {
+            background: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* App Grid Layouts */
+        .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+        /* Icon Sizes */
+        .icon-sm { width: 2.5rem; height: 2.5rem; font-size: 1.25rem; }
+        .icon-md { width: 3.5rem; height: 3.5rem; font-size: 1.75rem; }
+        .icon-lg { width: 4.5rem; height: 4.5rem; font-size: 2.25rem; }
+
+        /* Utility */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* App Runner Iframe */
+        #app-frame {
+            border: none;
+            width: 100%;
+            height: 100%;
+            background: white;
+        }
+
+        /* Prevent text selection on UI elements */
+        .no-select { user-select: none; -webkit-user-select: none; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden relative">
+
+    <!-- 1. Navigation Bar -->
+    <header id="navbar" class="fixed top-0 w-full z-40 glass-nav shadow-sm transition-transform duration-300">
+        <div class="flex justify-between items-center px-4 h-14">
+            <!-- Dynamic Title -->
+            <h1 id="app-title" class="font-bold text-lg truncate w-2/3">AppDock</h1>
+            
+            <!-- Contextual Actions -->
+            <div class="flex items-center space-x-4">
+                <!-- Old Close Button Removed from Header, moved to Floating inside runner -->
+                <button id="settings-btn" class="text-gray-600 hover:text-blue-500 transition">
+                    <i class="fa-solid fa-gear text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. Main App Drawer (Home) -->
+    <main id="app-drawer" class="pt-20 pb-10 px-4 h-full overflow-y-auto scrollbar-hide">
+        <div id="apps-grid" class="grid gap-6 justify-items-center grid-3 transition-all">
+            <!-- Apps injected here via JS -->
+        </div>
+        
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center mt-20 text-gray-400">
+            <i class="fa-solid fa-box-open text-4xl mb-4"></i>
+            <p>No apps installed.</p>
+            <p class="text-sm">Go to Settings > Developer to create one.</p>
+        </div>
+    </main>
+
+    <!-- 3. Settings & Developer Hub (Modal Overlay) -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-white transform translate-x-full transition-transform duration-300 flex flex-col">
+        <!-- Header -->
+        <div class="glass-nav h-14 px-4 flex items-center justify-between border-b">
+            <button id="back-btn" class="text-blue-600 flex items-center">
+                <i class="fa-solid fa-chevron-left mr-1"></i> Back
+            </button>
+            <span class="font-semibold">Control Center</span>
+            <div class="w-8"></div> <!-- Spacer -->
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b bg-gray-50">
+            <button class="flex-1 py-3 text-center font-medium text-blue-600 border-b-2 border-blue-600 tab-btn" data-tab="general">Settings</button>
+            <button class="flex-1 py-3 text-center font-medium text-gray-500 tab-btn" data-tab="developer">Developer</button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto bg-gray-50 p-4 pb-20">
+            
+            <!-- Tab: General Settings -->
+            <div id="tab-general" class="space-y-6">
+                <!-- Branding -->
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">Branding</h3>
+                    <div class="space-y-3">
+                        <label class="block">
+                            <span class="text-gray-700 text-sm">Dock Title</span>
+                            <input type="text" id="setting-title" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 text-sm" placeholder="AppDock">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Appearance -->
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">Appearance</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-gray-700 text-sm block mb-2">Background Style</span>
+                            <div class="flex space-x-2">
+                                <button class="w-8 h-8 rounded-full border bg-gray-100 theme-bg-btn" data-type="color" data-val="#f3f4f6"></button>
+                                <button class="w-8 h-8 rounded-full border bg-blue-100 theme-bg-btn" data-type="color" data-val="#dbeafe"></button>
+                                <button class="w-8 h-8 rounded-full border bg-gray-800 theme-bg-btn" data-type="color" data-val="#1f2937"></button>
+                                <button class="w-8 h-8 rounded-full border bg-gradient-to-tr from-pink-300 to-purple-400 theme-bg-btn" data-type="grad" data-val="linear-gradient(to top right, #f9a8d4, #c084fc)"></button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-700 text-sm block mb-2">Grid Columns</span>
+                            <input type="range" id="setting-cols" min="3" max="5" step="1" class="w-full">
+                            <div class="flex justify-between text-xs text-gray-400">
+                                <span>3</span><span>4</span><span>5</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-700 text-sm block mb-2">Icon Size</span>
+                            <input type="range" id="setting-icons" min="1" max="3" step="1" class="w-full">
+                            <div class="flex justify-between text-xs text-gray-400">
+                                <span>Small</span><span>Med</span><span>Large</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Developer Tools -->
+            <div id="tab-developer" class="hidden space-y-4">
+                <button id="create-app-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl shadow-md font-medium active:scale-95 transition">
+                    <i class="fa-solid fa-plus mr-2"></i> Create New App
+                </button>
+
+                <div id="dev-app-list" class="space-y-3 mt-4">
+                    <!-- Dev App List Items Injected Here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. App Editor Modal (Sub-modal of Settings) -->
+    <div id="editor-modal" class="fixed inset-0 z-[60] bg-white transform translate-y-full transition-transform duration-300 flex flex-col">
+        <div class="glass-nav h-14 px-4 flex items-center justify-between border-b shrink-0">
+            <button id="editor-close-btn" class="text-gray-600">Cancel</button>
+            <span class="font-semibold" id="editor-app-name">Edit App</span>
+            <button id="editor-save-btn" class="text-blue-600 font-bold">Done</button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <!-- App Metadata -->
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
+                <label class="block mb-2 text-sm font-medium">App Name</label>
+                <input type="text" id="edit-app-name" class="w-full border p-2 rounded mb-3">
+                
+                <label class="block mb-2 text-sm font-medium">Icon</label>
+                <div class="flex gap-2 mb-1">
+                    <input type="text" id="edit-app-icon" class="flex-1 border p-2 rounded text-sm" placeholder="https://... or 🚀">
+                    <label class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded border flex items-center justify-center transition" title="Upload Image">
+                        <i class="fa-solid fa-image"></i>
+                        <input type="file" id="icon-file-input" accept="image/*" class="hidden">
+                    </label>
+                </div>
+                <p class="text-xs text-gray-400">Enter an Emoji, Image URL, or upload a file.</p>
+            </div>
+
+            <!-- File Manager -->
+            <div class="bg-white p-4 rounded-xl shadow-sm flex-1">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold">Files</h3>
+                    <button id="add-file-btn" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded">
+                        <i class="fa-solid fa-file-circle-plus mr-1"></i> Add File
+                    </button>
+                </div>
+                
+                <div id="file-list" class="space-y-2">
+                    <!-- File Items Injected Here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Code Editor Modal -->
+    <div id="code-modal" class="fixed inset-0 z-[70] bg-gray-900 transform translate-x-full transition-transform duration-200 flex flex-col text-white">
+        <div class="h-12 bg-gray-800 flex items-center justify-between px-4 border-b border-gray-700">
+            <button id="code-back-btn" class="text-gray-300 hover:text-white"><i class="fa-solid fa-arrow-left"></i></button>
+            <span id="code-filename" class="font-mono text-sm">script.js</span>
+            <button id="code-save-btn" class="text-green-400 hover:text-green-300 font-bold text-sm">SAVE</button>
+        </div>
+        <textarea id="code-content" class="flex-1 bg-gray-900 text-gray-100 p-4 font-mono text-sm resize-none focus:outline-none w-full" spellcheck="false"></textarea>
+    </div>
+
+    <!-- 6. App Runner (Full Screen Overlay) -->
+    <div id="app-runner" class="fixed inset-0 z-30 bg-white transform translate-y-full transition-transform duration-300">
+        <!-- Floating Close Button Removed: Relies on Native Hardware Back Button -->
+        
+        <!-- The content is loaded into this iframe -->
+        <iframe id="app-frame" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+    </div>
+
+    <!-- MAIN LOGIC -->
+    <script>
+        /**
+         * ----------------------------------------
+         * 1. IndexedDB Manager (The "Hard Drive")
+         * ----------------------------------------
+         */
+        const DB_NAME = 'AppDockDB';
+        const DB_VERSION = 1;
+
+        const db = {
+            instance: null,
+            
+            init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    
+                    request.onupgradeneeded = (e) => {
+                        const d = e.target.result;
+                        // Store Apps Metadata
+                        if (!d.objectStoreNames.contains('apps')) {
+                            d.createObjectStore('apps', { keyPath: 'id' });
+                        }
+                        // Store Files
+                        if (!d.objectStoreNames.contains('files')) {
+                            const store = d.createObjectStore('files', { keyPath: 'id' });
+                            store.createIndex('appId', 'appId', { unique: false });
+                        }
+                    };
+
+                    request.onsuccess = (e) => {
+                        this.instance = e.target.result;
+                        resolve(this.instance);
+                    };
+                    
+                    request.onerror = (e) => reject(e);
+                });
+            },
+
+            // Generic Transaction Helper
+            tx(storeName, mode) {
+                return this.instance.transaction(storeName, mode).objectStore(storeName);
+            },
+
+            // App CRUD
+            async getApps() {
+                return new Promise(resolve => {
+                    const req = this.tx('apps', 'readonly').getAll();
+                    req.onsuccess = () => resolve(req.result);
+                });
+            },
+            
+            async saveApp(app) {
+                return new Promise(resolve => {
+                    const req = this.tx('apps', 'readwrite').put(app);
+                    req.onsuccess = () => resolve(app);
+                });
+            },
+
+            async deleteApp(id) {
+                // Delete app metadata
+                await new Promise(r => this.tx('apps', 'readwrite').delete(id).onsuccess = r);
+                // Delete associated files
+                const files = await this.getFiles(id);
+                const tx = this.instance.transaction('files', 'readwrite');
+                const store = tx.objectStore('files');
+                files.forEach(f => store.delete(f.id));
+                return new Promise(r => tx.oncomplete = r);
+            },
+
+            // File CRUD
+            async getFiles(appId) {
+                return new Promise(resolve => {
+                    const store = this.tx('files', 'readonly');
+                    const index = store.index('appId');
+                    const req = index.getAll(appId);
+                    req.onsuccess = () => resolve(req.result);
+                });
+            },
+
+            async saveFile(file) {
+                return new Promise(resolve => {
+                    this.tx('files', 'readwrite').put(file).onsuccess = () => resolve(file);
+                });
+            },
+
+            async deleteFile(fileId) {
+                return new Promise(resolve => {
+                    this.tx('files', 'readwrite').delete(fileId).onsuccess = () => resolve();
+                });
+            }
+        };
+
+        /**
+         * ----------------------------------------
+         * 2. State & Settings Management
+         * ----------------------------------------
+         */
+        const state = {
+            apps: [],
+            currentAppId: null, // For editor
+            settings: JSON.parse(localStorage.getItem('appdock_settings')) || {
+                title: 'AppDock',
+                bgColor: '#f3f4f6',
+                bgGradient: '',
+                cols: 3,
+                iconSize: 2 // 1=sm, 2=md, 3=lg
+            }
+        };
+
+        function saveSettings() {
+            localStorage.setItem('appdock_settings', JSON.stringify(state.settings));
+            applySettings();
+        }
+
+        function applySettings() {
+            // Apply Title
+            document.getElementById('app-title').innerText = state.settings.title;
+            document.getElementById('setting-title').value = state.settings.title;
+
+            // Apply Background
+            if (state.settings.bgGradient) {
+                document.body.style.background = state.settings.bgGradient;
+            } else {
+                document.body.style.background = '';
+                document.body.style.backgroundColor = state.settings.bgColor;
+            }
+            document.documentElement.style.setProperty('--bg-color', state.settings.bgColor);
+
+            // Apply Grid Cols
+            const grid = document.getElementById('apps-grid');
+            grid.className = `grid gap-6 justify-items-center transition-all grid-${state.settings.cols}`;
+            document.getElementById('setting-cols').value = state.settings.cols;
+
+            // Apply Icon Size
+            document.documentElement.style.setProperty('--icon-size', 
+                state.settings.iconSize == 1 ? '2.5rem' : 
+                state.settings.iconSize == 3 ? '4.5rem' : '3.5rem'
+            );
+            document.getElementById('setting-icons').value = state.settings.iconSize;
+        }
+
+        /**
+         * ----------------------------------------
+         * 3. User Interface Manager
+         * ----------------------------------------
+         */
+        const UI = {
+            screens: {
+                home: document.getElementById('app-drawer'),
+                settings: document.getElementById('settings-modal'),
+                runner: document.getElementById('app-runner'),
+                editor: document.getElementById('editor-modal'),
+                code: document.getElementById('code-modal')
+            },
+            
+            async renderHome() {
+                const grid = document.getElementById('apps-grid');
+                grid.innerHTML = '';
+                state.apps = await db.getApps();
+
+                if (state.apps.length === 0) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                } else {
+                    document.getElementById('empty-state').classList.add('hidden');
+                    state.apps.forEach(app => {
+                        const el = document.createElement('div');
+                        el.className = 'flex flex-col items-center gap-2 cursor-pointer active:opacity-60 transition';
+                        el.onclick = () => Runner.launch(app.id);
+
+                        // Icon handling (Image URL or Emoji)
+                        let iconHtml = '';
+                        if (app.icon.startsWith('http') || app.icon.startsWith('data:')) {
+                            iconHtml = `<img src="${app.icon}" class="rounded-xl shadow-lg object-cover bg-white" style="width: var(--icon-size); height: var(--icon-size);">`;
+                        } else {
+                            // Assume Emoji or Text
+                            iconHtml = `<div class="flex items-center justify-center rounded-xl shadow-lg bg-white text-2xl" style="width: var(--icon-size); height: var(--icon-size);">${app.icon || '📱'}</div>`;
+                        }
+
+                        el.innerHTML = `
+                            ${iconHtml}
+                            <span class="text-xs font-medium text-gray-700 truncate w-20 text-center select-none">${app.name}</span>
+                        `;
+                        grid.appendChild(el);
+                    });
+                }
+            },
+
+            renderDevList() {
+                const list = document.getElementById('dev-app-list');
+                list.innerHTML = '';
+                state.apps.forEach(app => {
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between bg-white p-3 rounded-lg shadow-sm';
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-lg overflow-hidden">
+                                ${app.icon.startsWith('http') || app.icon.startsWith('data:') ? `<img src="${app.icon}" class="w-full h-full object-cover">` : (app.icon || '📱')}
+                            </div>
+                            <span class="font-medium text-gray-800">${app.name}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="Editor.open('${app.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="Editor.deleteApp('${app.id}')" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-600"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            },
+
+            openSettings() {
+                this.screens.settings.classList.remove('translate-x-full');
+                history.pushState({view: 'settings'}, 'Settings', '#settings');
+                this.renderDevList();
+            },
+
+            closeSettings() {
+                this.screens.settings.classList.add('translate-x-full');
+            },
+
+            openRunner() {
+                this.screens.runner.classList.remove('translate-y-full');
+                // Hide Navbar for fullscreen
+                document.getElementById('navbar').classList.add('-translate-y-full');
+                
+                document.getElementById('settings-btn').classList.add('hidden');
+                history.pushState({view: 'runner'}, 'App', '#run');
+            },
+
+            closeRunner() {
+                this.screens.runner.classList.add('translate-y-full');
+                // Show Navbar
+                document.getElementById('navbar').classList.remove('-translate-y-full');
+
+                // Clean iframe
+                document.getElementById('app-frame').src = 'about:blank';
+                document.getElementById('settings-btn').classList.remove('hidden');
+            }
+        };
+
+        /**
+         * ----------------------------------------
+         * 4. Editor & File Manager
+         * ----------------------------------------
+         */
+        const Editor = {
+            currentFileId: null,
+
+            async open(appId) {
+                state.currentAppId = appId;
+                const app = state.apps.find(a => a.id === appId);
+                
+                // Populate Meta
+                document.getElementById('edit-app-name').value = app.name;
+                document.getElementById('edit-app-icon').value = app.icon;
+                // clear file input
+                document.getElementById('icon-file-input').value = '';
+                
+                document.getElementById('editor-app-name').innerText = 'Edit ' + app.name;
+
+                await this.refreshFileList();
+                
+                UI.screens.editor.classList.remove('translate-y-full');
+            },
+
+            async createNewApp() {
+                const newApp = {
+                    id: crypto.randomUUID(),
+                    name: 'New App',
+                    icon: '🚀',
+                    entryFileId: null
+                };
+                
+                // Create default index.html
+                const indexFile = {
+                    id: crypto.randomUUID(),
+                    appId: newApp.id,
+                    name: 'index.html',
+                    content: '<h1>Hello World</h1>\n<p>Welcome to my new app!</p>',
+                    type: 'text/html'
+                };
+                newApp.entryFileId = indexFile.id;
+
+                await db.saveApp(newApp);
+                await db.saveFile(indexFile);
+                
+                state.apps = await db.getApps(); // refresh global state
+                UI.renderDevList(); // refresh dev list
+                this.open(newApp.id); // open editor
+            },
+
+            async deleteApp(id) {
+                if(confirm('Delete this app permanently?')) {
+                    await db.deleteApp(id);
+                    state.apps = await db.getApps();
+                    UI.renderDevList();
+                    UI.renderHome();
+                }
+            },
+
+            async refreshFileList() {
+                const list = document.getElementById('file-list');
+                list.innerHTML = '';
+                const files = await db.getFiles(state.currentAppId);
+                const app = state.apps.find(a => a.id === state.currentAppId);
+
+                files.forEach(file => {
+                    const isEntry = app.entryFileId === file.id;
+                    const el = document.createElement('div');
+                    el.className = `flex items-center justify-between p-2 rounded border ${isEntry ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`;
+                    el.innerHTML = `
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <i class="fa-regular fa-file-code text-gray-500"></i>
+                            <span class="text-sm font-mono truncate ${isEntry ? 'font-bold text-blue-700':''}">${file.name}</span>
+                            ${isEntry ? '<span class="text-[10px] bg-blue-600 text-white px-1 rounded">MAIN</span>' : ''}
+                        </div>
+                        <div class="flex gap-1">
+                            ${!isEntry ? `<button title="Set as Entry" onclick="Editor.setEntry('${file.id}')" class="p-1 hover:text-blue-600"><i class="fa-solid fa-play"></i></button>` : ''}
+                            <button onclick="Editor.editFile('${file.id}')" class="p-1 hover:text-gray-900"><i class="fa-solid fa-pen"></i></button>
+                            ${!isEntry ? `<button onclick="Editor.deleteFile('${file.id}')" class="p-1 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        </div>
+                    `;
+                    list.appendChild(el);
+                });
+            },
+
+            async setEntry(fileId) {
+                const app = state.apps.find(a => a.id === state.currentAppId);
+                app.entryFileId = fileId;
+                await db.saveApp(app);
+                this.refreshFileList();
+            },
+
+            async editFile(fileId) {
+                this.currentFileId = fileId;
+                const files = await db.getFiles(state.currentAppId);
+                const file = files.find(f => f.id === fileId);
+                
+                document.getElementById('code-filename').innerText = file.name;
+                document.getElementById('code-content').value = file.content;
+                
+                UI.screens.code.classList.remove('translate-x-full');
+            },
+
+            async saveCurrentFile() {
+                const content = document.getElementById('code-content').value;
+                const files = await db.getFiles(state.currentAppId);
+                const file = files.find(f => f.id === this.currentFileId);
+                file.content = content;
+                await db.saveFile(file);
+                UI.screens.code.classList.add('translate-x-full');
+            },
+
+            async addFile() {
+                const name = prompt("Filename (e.g., style.css):", "new_file.html");
+                if (!name) return;
+                
+                const newFile = {
+                    id: crypto.randomUUID(),
+                    appId: state.currentAppId,
+                    name: name,
+                    content: '/* New File */',
+                    type: name.endsWith('.js') ? 'text/javascript' : (name.endsWith('.css') ? 'text/css' : 'text/html')
+                };
+                await db.saveFile(newFile);
+                this.refreshFileList();
+            },
+
+            async deleteFile(id) {
+                if(confirm('Delete file?')) {
+                    await db.deleteFile(id);
+                    this.refreshFileList();
+                }
+            },
+
+            async saveAppMeta() {
+                const app = state.apps.find(a => a.id === state.currentAppId);
+                app.name = document.getElementById('edit-app-name').value;
+                app.icon = document.getElementById('edit-app-icon').value;
+                await db.saveApp(app);
+                
+                // Close Modal
+                UI.screens.editor.classList.add('translate-y-full');
+                UI.renderDevList();
+                UI.renderHome();
+            }
+        };
+
+        /**
+         * ----------------------------------------
+         * 5. App Runner (The "Kernel")
+         * ----------------------------------------
+         */
+        const Runner = {
+            async launch(appId) {
+                const app = state.apps.find(a => a.id === appId);
+                if (!app || !app.entryFileId) {
+                    alert('App is corrupted or has no entry file.');
+                    return;
+                }
+
+                // Get all files for this app
+                const files = await db.getFiles(appId);
+                const entryFile = files.find(f => f.id === app.entryFileId);
+
+                if (!entryFile) {
+                    alert('Entry file not found.');
+                    return;
+                }
+
+                // ---------------------------------------------------------
+                // Basic Dependency Injection Logic for Single-File simulation
+                // ---------------------------------------------------------
+                // Ideally we use a Service Worker to intercept requests, 
+                // but for a simple local runner, we'll assume the user
+                // mostly writes single files or we can try to inject blobs.
+                // Here, we just serve the Main Entry. 
+                // ---------------------------------------------------------
+
+                let finalContent = entryFile.content;
+
+                // Simple rudimentary CSS/JS injection if linked relatively
+                // (Note: This is a basic implementation. A full OS needs a SW Proxy)
+                const cssFiles = files.filter(f => f.type === 'text/css');
+                const jsFiles = files.filter(f => f.type === 'text/javascript');
+
+                // Auto-inject CSS if not present
+                // This is a helper for "easy mode" apps
+                cssFiles.forEach(css => {
+                    // if content doesn't have link, inject style tag
+                    if (!finalContent.includes(css.name)) {
+                        finalContent += `\n<style>\n/* ${css.name} */\n${css.content}\n</style>`;
+                    }
+                });
+
+                // Create Blob
+                const blob = new Blob([finalContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+
+                const frame = document.getElementById('app-frame');
+                frame.src = url;
+
+                UI.openRunner();
+            }
+        };
+
+        /**
+         * ----------------------------------------
+         * 6. Event Wiring & Initialization
+         * ----------------------------------------
+         */
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Init DB
+            await db.init();
+            
+            // Load Settings
+            applySettings();
+
+            // Initial Render
+            await UI.renderHome();
+
+            // Service Worker Registration
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW Registered', reg))
+                    .catch(err => console.log('SW Failed', err));
+            }
+
+            // Navigation Events
+            document.getElementById('settings-btn').onclick = () => UI.openSettings();
+            document.getElementById('back-btn').onclick = () => {
+                UI.closeSettings();
+                history.back(); // to sync state
+            };
+            
+            // Floating Close Button Logic Removed
+
+            // Image Upload Logic
+            document.getElementById('icon-file-input').onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        // Store Base64 directly in the text input so it saves with saveAppMeta
+                        document.getElementById('edit-app-icon').value = evt.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Tab Switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    // Reset styling
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                        b.classList.add('text-gray-500');
+                    });
+                    // Active styling
+                    e.target.classList.remove('text-gray-500');
+                    e.target.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+                    
+                    // Show Content
+                    const tab = e.target.dataset.tab;
+                    document.getElementById('tab-general').classList.add('hidden');
+                    document.getElementById('tab-developer').classList.add('hidden');
+                    document.getElementById(`tab-${tab}`).classList.remove('hidden');
+                };
+            });
+
+            // Settings Inputs
+            document.getElementById('setting-title').oninput = (e) => {
+                state.settings.title = e.target.value;
+                saveSettings();
+            };
+            document.getElementById('setting-cols').oninput = (e) => {
+                state.settings.cols = e.target.value;
+                saveSettings();
+            };
+            document.getElementById('setting-icons').oninput = (e) => {
+                state.settings.iconSize = e.target.value;
+                saveSettings();
+            };
+            document.querySelectorAll('.theme-bg-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const type = btn.dataset.type;
+                    const val = btn.dataset.val;
+                    if(type === 'grad') {
+                        state.settings.bgGradient = val;
+                        state.settings.bgColor = '#f3f4f6';
+                    } else {
+                        state.settings.bgGradient = '';
+                        state.settings.bgColor = val;
+                    }
+                    saveSettings();
+                };
+            });
+
+            // Developer Events
+            document.getElementById('create-app-btn').onclick = () => Editor.createNewApp();
+            document.getElementById('editor-close-btn').onclick = () => UI.screens.editor.classList.add('translate-y-full');
+            document.getElementById('editor-save-btn').onclick = () => Editor.saveAppMeta();
+            document.getElementById('add-file-btn').onclick = () => Editor.addFile();
+
+            // Code Editor Events
+            document.getElementById('code-back-btn').onclick = () => UI.screens.code.classList.add('translate-x-full');
+            document.getElementById('code-save-btn').onclick = () => Editor.saveCurrentFile();
+
+            // History API handling for Back Button
+            window.onpopstate = (e) => {
+                // If we pressed back but modals are open, close them manually
+                if (UI.screens.runner.classList.contains('translate-y-full') === false) {
+                    UI.closeRunner();
+                }
+                if (UI.screens.settings.classList.contains('translate-x-full') === false) {
+                    UI.closeSettings();
+                }
+            };
+        });
+    </script>
+</body>
+  </html>
