@@ -4,6 +4,7 @@ const CACHE_NAME = 'quiz-master-cache-v1';
 const urlsToCache = [
   './index.html', // The main application file
   './manifest.json',
+  './icon123.png',
   // You would typically list all icon files here:
   // './icons/icon-72x72.png',
   // './icons/icon-192x192.png',
