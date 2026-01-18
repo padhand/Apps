@@ -1,24 +1,16 @@
 {
-    "name": "AppDock",
-    "short_name": "AppDock",
-    "description": "Offline PWA App Manager and OS",
-    "start_url": "./index.html",
-    "display": "standalone",
-    "background_color": "#f3f4f6",
-    "theme_color": "#ffffff",
-    "orientation": "portrait-primary",
-    "icons": [
-        {
-            "src": "Icon.png",
-            "sizes": "192x192",
-            "type": "image/svg+xml",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "Icon.png",
-            "sizes": "512x512",
-            "type": "image/svg+xml",
-            "purpose": "any maskable"
-        }
-    ]
+  "name": "Quiz Master App",
+  "short_name": "Quiz Master",
+  "description": "A Progressive Web App for creating and taking quizzes.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#007aff",
+  "icons": [
+    {
+      "src": "/icon123.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
