@@ -4,303 +4,173 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Quiz Master App</title>
-    <!-- PWA Manifest Link -->
-    <link rel="manifest" href="manifest.json">
+    
+    <!-- Supabase, Marked (Markdown), and KaTeX (LaTeX) CDNs -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
     <style>
         /* --- NATIVE APP THEME --- */
         :root {
-            --primary: #6366f1;
-            --primary-active: #4f46e5;
-            --primary-light: #e0e7ff;
-            
-            --bg-app: #f2f2f7;
-            --bg-surface: #ffffff;
-            --bg-header: rgba(255, 255, 255, 0.95);
-            --bg-tabbar: rgba(255, 255, 255, 0.98);
-            
-            --text-main: #000000;
-            --text-secondary: #8e8e93;
-            
-            --border: #c6c6c8;
-            --separator: #e5e5ea;
-            
-            --danger: #ff3b30;
-            --success: #34c759;
-            --warning: #ffcc00;
-            --blue: #007aff;
-            --radius-card: 16px;
-            --radius-btn: 12px;
-            
+            --primary: #6366f1; --primary-active: #4f46e5; --primary-light: #e0e7ff;
+            --bg-app: #f2f2f7; --bg-surface: #ffffff;
+            --bg-header: rgba(255, 255, 255, 0.95); --bg-tabbar: rgba(255, 255, 255, 0.98);
+            --text-main: #000000; --text-secondary: #8e8e93;
+            --border: #c6c6c8; --separator: #e5e5ea;
+            --danger: #ff3b30; --success: #34c759; --warning: #ffcc00; --blue: #007aff;
+            --radius-card: 16px; --radius-btn: 12px;
             --shadow-card: 0 2px 8px rgba(0,0,0,0.04);
-            --safe-area-top: env(safe-area-inset-top);
-            --safe-area-bottom: env(safe-area-inset-bottom);
-            
+            --safe-area-top: env(safe-area-inset-top); --safe-area-bottom: env(safe-area-inset-bottom);
             --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
             --font-scale: 1;
         }
         [data-theme="dark"] {
-            --bg-app: #000000;
-            --bg-surface: #1c1c1e;
-            --bg-header: rgba(28, 28, 30, 0.95);
-            --bg-tabbar: rgba(28, 28, 30, 0.98);
-            --text-main: #ffffff;
-            --text-secondary: #98989d;
-            --border: #38383a;
-            --separator: #38383a;
-            --primary-light: #313136;
+            --bg-app: #000000; --bg-surface: #1c1c1e;
+            --bg-header: rgba(28, 28, 30, 0.95); --bg-tabbar: rgba(28, 28, 30, 0.98);
+            --text-main: #ffffff; --text-secondary: #98989d;
+            --border: #38383a; --separator: #38383a; --primary-light: #313136;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; } /* Removed user-select: none to allow text selection */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         
         body {
-            font-family: var(--font-stack);
-            background-color: var(--bg-app);
-            color: var(--text-main);
-            margin: 0; padding: 0;
-            font-size: calc(16px * var(--font-scale));
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
+            font-family: var(--font-stack); background-color: var(--bg-app); color: var(--text-main);
+            margin: 0; padding: 0; font-size: calc(16px * var(--font-scale));
+            height: 100vh; width: 100vw; overflow: hidden;
         }
-        /* --- LAYOUT STRUCTURE --- */
-        #app-container {
-            height: 100%; width: 100%;
-            display: flex; flex-direction: column;
-        }
-        /* Fixed Header */
+        
+        #app-container { height: 100%; width: 100%; display: flex; flex-direction: column; }
+        
         .app-header {
-            position: fixed; top: 0; left: 0; right: 0;
-            height: calc(56px + var(--safe-area-top));
-            padding-top: var(--safe-area-top);
-            background: var(--bg-header);
+            position: fixed; top: 0; left: 0; right: 0; height: calc(56px + var(--safe-area-top));
+            padding-top: var(--safe-area-top); background: var(--bg-header);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border-bottom: 0.5px solid var(--separator);
-            z-index: 50;
+            border-bottom: 0.5px solid var(--separator); z-index: 50;
             display: flex; align-items: center; justify-content: center;
         }
         .header-title { font-weight: 700; font-size: 17px; }
-        /* Modern Header Buttons */
+        
         .header-btn {
             position: absolute; top: calc(var(--safe-area-top) + 10px);
-            padding: 6px 14px; 
-            font-size: 14px; 
-            font-weight: 600;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-            display: flex; align-items: center; justify-content: center;
-            height: 36px;
+            padding: 6px 14px; font-size: 14px; font-weight: 600; border-radius: 20px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; height: 36px;
         }
-        .header-btn:active { transform: scale(0.96); opacity: 0.8; }
-        .header-btn.left { 
-            left: 12px; 
-            background: rgba(120, 120, 128, 0.12);
-            color: var(--text-main); 
-            border: none;
-        }
-        [data-theme="dark"] .header-btn.left { background: rgba(120, 120, 128, 0.24); }
-        .header-btn.right { 
-            right: 12px; 
-            background: var(--blue); 
-            color: white; 
-            border: none;
-            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.25);
-        }
-        /* Scrollable Content Area */
+        .header-btn.left { left: 12px; background: rgba(120, 120, 128, 0.12); color: var(--text-main); border: none; }
+        .header-btn.right { right: 12px; background: var(--blue); color: white; border: none; }
+        
         .view-container {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding-top: calc(66px + var(--safe-area-top)); 
-            padding-bottom: calc(80px + var(--safe-area-bottom));
-            background: var(--bg-app);
-            display: none;
-            opacity: 0;
-            transition: opacity 0.2s ease;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding-top: calc(66px + var(--safe-area-top)); padding-bottom: calc(80px + var(--safe-area-bottom));
+            background: var(--bg-app); display: none;
         }
-        .view-container.active { display: block; opacity: 1; }
-        /* FIXED Bottom Navigation Bar */
-        .tab-bar {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: calc(60px + var(--safe-area-bottom));
-            padding-bottom: var(--safe-area-bottom);
-            background: var(--bg-tabbar);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-top: 0.5px solid var(--separator);
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 90;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-        }
+        .view-container.active { display: block; }
         
+        .tab-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: calc(60px + var(--safe-area-bottom)); padding-bottom: var(--safe-area-bottom);
+            background: var(--bg-tabbar); backdrop-filter: blur(20px); border-top: 0.5px solid var(--separator);
+            display: flex; justify-content: space-around; align-items: center; z-index: 90;
+        }
         .tab-item {
-            flex: 1; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--text-secondary);
-            font-size: 10px; font-weight: 500;
-            gap: 4px; cursor: pointer;
+            flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-secondary); font-size: 10px; font-weight: 500; gap: 4px; cursor: pointer;
         }
         .tab-item svg { width: 24px; height: 24px; fill: currentColor; }
         .tab-item.active { color: var(--blue); }
-        /* Full Screen Overlay */
+        
         .full-screen-overlay {
-            position: fixed; inset: 0;
-            background: var(--bg-app);
-            z-index: 100;
-            display: flex; flex-direction: column;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-            padding-top: var(--safe-area-top);
+            position: fixed; inset: 0; background: var(--bg-app); z-index: 100;
+            display: flex; flex-direction: column; transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); padding-top: var(--safe-area-top);
         }
         .full-screen-overlay.open { transform: translateY(0); }
-
-        /* Quick Switch Modal (Bottom Sheet style) */
-        #overlay-quick-switch {
-            background: rgba(0,0,0,0.5); /* Semi-transparent background */
-            justify-content: flex-end;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-        #quick-switch-content {
-            background: var(--bg-surface);
-            border-radius: 20px 20px 0 0; 
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: hidden;
-            padding: 24px 16px;
-        }
-        #quick-switch-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 12px;
-            padding: 16px 0;
-            max-height: 55vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .q-switch-btn {
-            background: var(--bg-app);
-            color: var(--text-main);
-            border: 1px solid var(--separator);
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            border-radius: var(--radius-btn);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .q-switch-btn.current {
-            background: var(--blue);
-            color: white;
-            border-color: var(--blue);
-        }
-        .q-switch-btn.answered {
-            background: var(--primary-light);
-            color: var(--primary-active);
-            border-color: var(--primary-active);
-        }
-
-        /* --- COMPONENTS --- */
-        .card-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 16px; }
         
-        .quiz-card {
-            background: var(--bg-surface);
-            border-radius: var(--radius-card);
-            padding: 16px;
-            box-shadow: var(--shadow-card);
-            display: flex; flex-direction: column;
-            transition: opacity 0.1s;
-        }
-        .quiz-card:active { opacity: 0.7; }
+        .card-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 16px; }
+        .quiz-card { background: var(--bg-surface); border-radius: var(--radius-card); padding: 16px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; }
+        .online-card { background: linear-gradient(135deg, var(--blue), #5856d6); color: white; border-radius: var(--radius-card); padding: 20px; text-align: center; margin: 16px; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3); cursor: pointer; }
+        .online-card h3 { margin: 0 0 5px 0; font-size: 20px; }
+        .online-card p { margin: 0; font-size: 14px; opacity: 0.9; }
+
         .list-group { background: var(--bg-surface); border-radius: 12px; margin: 16px; overflow: hidden; }
         .list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 0.5px solid var(--separator); min-height: 48px; }
         .list-item:last-child { border-bottom: none; }
         .list-header { margin: 24px 16px 8px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase; font-weight: 500; }
-        .btn { 
-            background: var(--blue); color: white; border: none; padding: 14px; border-radius: var(--radius-btn); 
-            font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; width: 100%; 
-            transition: transform 0.1s;
-        }
-        .btn:active:not(:disabled) { transform: scale(0.98); }
+        
+        .btn { background: var(--blue); color: white; border: none; padding: 14px; border-radius: var(--radius-btn); font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; width: 100%; }
         .btn-outline { background: transparent; border: 1px solid var(--blue); color: var(--blue); }
         .btn-danger { background: var(--danger); color: white; }
         
-        input, textarea, select { width: 100%; padding: 12px; background: var(--bg-app); border: none; border-radius: 10px; color: var(--text-main); font-size: 16px; }
+        /* Updated Checkbox Style */
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--blue); cursor: pointer; }
+        input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 12px; background: var(--bg-app); border: none; border-radius: 10px; color: var(--text-main); font-size: 16px; border: 1px solid var(--border); }
         
-        /* FAB */
         .fab {
-            position: fixed; right: 20px;
-            width: 56px; height: 56px; border-radius: 50%;
-            background: var(--blue); color: white;
+            position: fixed; bottom: calc(80px + var(--safe-area-bottom)); right: 20px;
+            width: 56px; height: 56px; border-radius: 50%; background: var(--blue); color: white;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 80;
-            font-size: 30px; cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 80; font-size: 30px; cursor: pointer;
         }
-        .fab:active { transform: scale(0.95); }
-        .fab-main { bottom: calc(80px + var(--safe-area-bottom)); }
-        .fab-game { bottom: calc(100px + var(--safe-area-bottom)); }
-
-        /* Utils */
+        
         .hidden { display: none !important; }
-        .flex { display: flex; } 
-        .flex-col { flex-direction: column; }
-        .gap-2 { gap: 8px; } .justify-between { justify-content: space-between; }
-        .text-muted { color: var(--text-secondary); }
-        /* File Item */
-        .file-item { 
-            background: var(--bg-surface); padding: 12px 16px; border-bottom: 0.5px solid var(--separator); 
-            display: flex; align-items: center; gap: 12px; transition: background-color 0.1s;
-        }
-        .file-item:active { background-color: var(--bg-app); }
+        .flex { display: flex; } .flex-col { flex-direction: column; } .gap-2 { gap: 8px; }
+        
         /* Toggles */
         .switch { position: relative; display: inline-block; width: 50px; height: 30px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e9e9ea; border-radius: 34px; transition: .3s; }
         [data-theme="dark"] .slider { background-color: #39393d; }
-        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .3s; }
         input:checked + .slider { background-color: var(--success); }
         input:checked + .slider:before { transform: translateX(20px); }
+
+        /* MD content */
+        .md-content img { max-width: 100%; border-radius: 8px; }
+        .md-content p { margin: 0; }
     </style>
 </head>
 <body>
+
 <div id="app-container">
-    
-    <!-- HEADER -->
-    <header class="app-header">
-        <div class="header-title" id="nav-title">Loading...</div>
-    </header>
+    <header class="app-header"><div class="header-title" id="nav-title">Library</div></header>
 
     <!-- TAB 1: LIBRARY (HOME) -->
     <div id="view-library" class="view-container active">
-        <div id="quiz-list" class="card-grid"></div>
-        <div id="empty-library-msg" style="text-align: center; padding: 20px; color: var(--text-secondary); font-size: 14px; display: none;">
-            Tap + to add a new quiz
+        <!-- PERMANENT ONLINE QUIZZES BUTTON -->
+        <div class="online-card" onclick="openOnlineSetup()">
+            <h3>🌐 Online Quizzes</h3>
+            <p>Fetch fresh quizzes from the global database</p>
         </div>
+
+        <div class="list-header" style="margin-top: 20px;">Local Quizzes</div>
+        <div id="quiz-list" class="card-grid" style="padding-top: 0;"></div>
     </div>
+
     <!-- TAB 2: FILES -->
     <div id="view-files" class="view-container">
         <div class="list-group" style="margin-top: 0;">
             <div class="list-item">
                 <div class="flex gap-2" style="width: 100%;">
+                    <!-- RESTORED: Import Button -->
                     <label class="btn btn-outline" style="flex:1; padding: 8px; font-size: 14px;">
                         Import
                         <input type="file" hidden accept=".json" onchange="handleImport(this)" multiple>
                     </label>
+                    <!-- RESTORED: Export & Delete Buttons -->
                     <button onclick="exportAll()" class="btn btn-outline" style="flex:1; padding: 8px; font-size: 14px;">Export</button>
                     <button onclick="bulkDelete()" class="btn btn-danger" style="flex:1; padding: 8px; font-size: 14px;">Delete</button>
                 </div>
             </div>
-            <div class="list-header flex justify-between">
+            <div class="list-header flex justify-between" style="align-items: center; margin-top: 8px;">
                 <span>Stored Quizzes</span>
-                <span onclick="selectAllFiles()" style="color:var(--blue);cursor:pointer;">Select All</span>
+                <span onclick="selectAllFiles()" style="color:var(--blue);cursor:pointer; text-transform: none; font-weight: 600;">Select All</span>
             </div>
         </div>
-        <div id="file-list-container"></div>
+        <div id="file-list-container" class="list-group" style="margin-top: 0;"></div>
     </div>
+
     <!-- TAB 3: SETTINGS -->
     <div id="view-settings" class="view-container">
         <div class="list-header">Appearance</div>
@@ -314,73 +184,61 @@
                 <input type="range" style="width:100%" min="0.8" max="1.3" step="0.1" id="font-slider" onchange="setFontSize(this.value)">
             </div>
         </div>
-        <div class="list-header">Developer Tools</div>
-        <div class="list-group">
-            <div class="list-item" style="display: block;">
-                <textarea id="json-paste" rows="5" placeholder="Paste Raw JSON here..." style="font-family: monospace; font-size: 12px;"></textarea>
-                <button onclick="importRaw()" class="btn" style="margin-top: 8px;">Import Raw JSON</button>
-            </div>
-        </div>
-        <div class="list-group">
-            <div class="list-item" onclick="deleteAllData()" style="justify-content: center; cursor: pointer;">
-                <span style="color: var(--danger); font-weight: 600;">Reset Application Data (IndexedDB & Settings)</span>
+
+        <!-- NEW: IMPORT QUIZ VIA TEXT SECTION -->
+        <div class="list-header">Import JSON Text</div>
+        <div class="list-group" style="padding: 16px;">
+            <textarea id="json-import-textarea" rows="6" placeholder="Paste your Quiz JSON data here..." style="resize: vertical; font-family: monospace; font-size: 12px; margin-bottom: 12px;"></textarea>
+            <div class="flex gap-2">
+                <button class="btn btn-outline" style="flex: 1; padding: 8px; font-size: 12px;" onclick="copyJsonFormat()">Copy Format</button>
+                <button class="btn btn-outline" style="flex: 1; padding: 8px; font-size: 12px;" onclick="pasteJson()">Paste</button>
+                <button class="btn" style="flex: 1; padding: 8px; font-size: 12px;" onclick="importJsonText()">Import</button>
             </div>
         </div>
     </div>
-    
-    <!-- FIXED BOTTOM NAVIGATION -->
+
     <nav class="tab-bar">
-        <div class="tab-item active" onclick="switchTab('library', this)">
-            <!-- Icon: Library/Book -->
-            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
-            Library
-        </div>
-        <div class="tab-item" onclick="switchTab('files', this)">
-            <!-- Icon: Files/Folder -->
-            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-            Files
-        </div>
-        <div class="tab-item" onclick="switchTab('settings', this)">
-            <!-- Icon: Settings/Gear -->
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.04.17 0 .4.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.04-.22 0-.45-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-            Settings
-        </div>
+        <div class="tab-item active" onclick="switchTab('library', this)"><svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>Library</div>
+        <div class="tab-item" onclick="switchTab('files', this)"><svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>Files</div>
+        <div class="tab-item" onclick="switchTab('settings', this)"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.04.17 0 .4.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.04-.22 0-.45-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings</div>
     </nav>
-    <!-- FAB for adding new quizzes -->
-    <div class="fab fab-main" id="fab-add" onclick="openEditor()">+</div>
+    <div class="fab" id="fab-add" onclick="openEditor()">+</div>
 </div>
 
-<!-- OVERLAY: EDITOR -->
-<div id="overlay-editor" class="full-screen-overlay">
-    <div class="app-header" style="position: absolute;">
-        <button class="header-btn left" onclick="closeOverlay('overlay-editor')">Cancel</button>
-        <div class="header-title">Edit Quiz</div>
-        <button class="header-btn right" onclick="saveQuiz()">Save</button>
-    </div>
-    <div style="flex:1; overflow-y:auto; padding: 76px 16px 20px;">
-        <div class="list-group" style="margin:0 0 20px 0;">
-            <div class="list-item">
-                <input type="text" id="edit-title" placeholder="Quiz Title" style="font-weight:700;">
+<!-- OVERLAY: DATABASE ONLINE SETUP -->
+<div id="overlay-online" class="full-screen-overlay" style="justify-content: flex-end; background: rgba(0,0,0,0.5);">
+    <div style="background: var(--bg-surface); border-radius: 20px 20px 0 0; padding: 24px; animation: slideUp 0.3s;">
+        <h2 style="margin: 0 0 20px 0;">🌐 Online Database Quiz</h2>
+        <div class="list-group" style="margin: 0 0 20px 0;">
+            <div class="list-item" style="flex-direction: column; align-items: flex-start; border: none; padding-bottom: 0;">
+                <label class="text-secondary text-xs uppercase font-bold" style="font-size: 12px; color: var(--text-secondary);">Select Subject</label>
+                <select id="online-subject" style="margin-top: 8px;">
+                    <option value="All">Loading Subjects...</option>
+                </select>
+            </div>
+            <div class="list-item" style="flex-direction: column; align-items: flex-start; border: none;">
+                <label class="text-secondary text-xs uppercase font-bold" style="font-size: 12px; color: var(--text-secondary);">Number of Questions</label>
+                <input type="number" id="online-count" value="10" min="1" max="100" style="margin-top: 8px;">
             </div>
         </div>
-        <div id="edit-questions-list"></div>
-        <button onclick="addQuestion()" class="btn btn-outline" style="margin-top:20px; border-style:dashed;">+ Add Question</button>
-        <br><br>
+
+        <button onclick="fetchAndStartOnlineQuiz()" class="btn" id="btn-fetch-online">Load & Start Quiz</button>
+        <button onclick="closeOverlay('overlay-online')" class="btn btn-outline" style="border:none; margin-top:10px;">Cancel</button>
     </div>
 </div>
 
-<!-- OVERLAY: START OPTIONS -->
+<!-- OVERLAY: START LOCAL OPTIONS -->
 <div id="overlay-start" class="full-screen-overlay" style="justify-content: flex-end; background: rgba(0,0,0,0.5);">
     <div style="background: var(--bg-surface); border-radius: 20px 20px 0 0; padding: 24px; animation: slideUp 0.3s;">
-        <h2 style="margin: 0 0 20px 0;">Quiz Setup</h2>
-        <div class="flex gap-2 mb-4">
+        <h2 style="margin: 0 0 20px 0;" id="setup-title">Quiz Setup</h2>
+        <div class="flex gap-2 mb-4" style="margin-bottom: 16px;">
             <div style="flex:1">
-                <label class="text-secondary text-xs uppercase font-bold">Time (Min)</label>
-                <input type="number" id="play-timer" placeholder="None" style="background: var(--bg-app);">
+                <label style="font-size: 12px; color: var(--text-secondary);">Time (Min)</label>
+                <input type="number" id="play-timer" placeholder="None" style="background: var(--bg-app); margin-top: 4px;">
             </div>
             <div style="flex:1">
-                <label class="text-secondary text-xs uppercase font-bold">Penalty</label>
-                <select id="play-penalty" style="background: var(--bg-app);">
+                <label style="font-size: 12px; color: var(--text-secondary);">Penalty</label>
+                <select id="play-penalty" style="background: var(--bg-app); margin-top: 4px;">
                     <option value="0">None</option>
                     <option value="0.25">-0.25</option>
                     <option value="0.5">-0.50</option>
@@ -390,22 +248,36 @@
         <div class="list-group" style="margin: 0 0 20px 0;">
             <div class="list-item">
                 <span>Shuffle Questions</span>
-                <label class="switch"><input type="checkbox" id="play-shuffle"><span class="slider"></span></label>
+                <label class="switch"><input type="checkbox" id="play-shuffle" checked><span class="slider"></span></label>
             </div>
             <div class="list-item">
-                <span>Exam Mode (Allow skip/revisit)</span>
+                <span>Exam Mode (Hide Answers)</span>
                 <label class="switch"><input type="checkbox" id="play-mode" checked><span class="slider"></span></label>
             </div>
         </div>
-        <button onclick="startQuiz()" class="btn">Start Quiz</button>
+        <button onclick="startQuiz()" class="btn">Start</button>
         <button onclick="closeOverlay('overlay-start')" class="btn btn-outline" style="border:none; margin-top:10px;">Cancel</button>
+    </div>
+</div>
+
+<!-- OVERLAY: EDITOR -->
+<div id="overlay-editor" class="full-screen-overlay">
+    <div class="app-header" style="position: absolute;">
+        <button class="header-btn left" onclick="closeOverlay('overlay-editor')">Cancel</button>
+        <div class="header-title">Edit Local Quiz</div>
+        <button class="header-btn right" onclick="saveQuiz()">Save</button>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding: 76px 16px 20px;">
+        <input type="text" id="edit-title" placeholder="Quiz Title" style="font-weight:700; margin-bottom: 16px;">
+        <div id="edit-questions-list"></div>
+        <button onclick="addQuestion()" class="btn btn-outline" style="margin-top:20px; border-style:dashed;">+ Add Question</button>
     </div>
 </div>
 
 <!-- OVERLAY: PLAYER -->
 <div id="overlay-player" class="full-screen-overlay">
     <div class="app-header" style="position: absolute;">
-        <button class="header-btn left" onclick="finishGame(true)">Exit</button>
+        <button class="header-btn left" onclick="closeOverlay('overlay-player')">Exit</button>
         <div class="header-title" id="game-progress">Q 1/10</div>
         <div class="header-btn right" id="game-timer-display" style="background: transparent; color: var(--text-main); box-shadow: none; pointer-events: none;"></div>
     </div>
@@ -413,36 +285,15 @@
         <div style="height:4px; background:var(--separator); border-radius:2px; margin-bottom:20px; overflow:hidden;">
             <div id="game-bar" style="height:100%; width:0%; background:var(--blue); transition:width 0.3s;"></div>
         </div>
-        <div id="game-paragraph" class="list-group hidden" style="margin:0 0 20px 0; background:#f0f9ff; border:1px solid #bae6fd;">
-            <div class="list-item" style="border:none; padding:16px;">
-                <p id="game-p-text" style="font-size:14px; line-height:1.5; color:#0c4a6e; margin:0;"></p>
-            </div>
-        </div>
-        <h2 id="game-q-text" style="font-size:20px; font-weight:700; margin-bottom:24px;"></h2>
+        <div id="game-q-text" class="md-content" style="font-size:18px; font-weight:600; margin-bottom:24px;"></div>
         <div id="game-options" class="flex-col gap-2 flex"></div>
-    </div>
-    <!-- Quick Switch FAB in Player -->
-    <div class="fab fab-game" id="fab-quick-switch" onclick="openQuickSwitch()">
-        <svg fill="currentColor" viewBox="0 0 24 24" style="width:24px; height:24px;">
-            <path d="M10 20H8V4h2v16zm6-4h-2v4h2v-4zm-3-5h-2v4h2v-4zm3-4h-2v4h2V7zm-6-3h-2v4h2V4z"/>
-        </svg>
+        
+        <div id="game-explanation" class="hidden md-content" style="margin-top: 20px; padding: 16px; background: rgba(52, 199, 89, 0.1); border-left: 4px solid var(--success); border-radius: 8px;"></div>
     </div>
     <div style="position:absolute; bottom:0; left:0; right:0; padding:20px; background:var(--bg-tabbar); border-top:0.5px solid var(--separator); display: flex; gap: 10px;">
-        <button id="btn-prev" onclick="changeQ(-1)" class="btn btn-outline" style="flex:1;">Prev</button>
+        <button id="btn-prev" onclick="prevQ()" class="btn btn-outline" style="flex:1;">Prev</button>
         <button id="btn-skip" onclick="skipQ()" class="btn btn-outline" style="flex:1;">Skip</button>
-        <button id="btn-next" onclick="changeQ(1)" class="btn" style="flex:2;">Next</button>
-    </div>
-</div>
-
-<!-- OVERLAY: QUICK SWITCH -->
-<div id="overlay-quick-switch" class="full-screen-overlay">
-    <div id="quick-switch-content">
-        <h2 style="margin-top: 0; margin-bottom: 8px;">Quick Switch</h2>
-        <p class="text-secondary" style="margin-top: 0;">Jump to any question.</p>
-        <div id="quick-switch-grid">
-            <!-- Question buttons will be rendered here -->
-        </div>
-        <button onclick="closeOverlay('overlay-quick-switch')" class="btn btn-outline" style="margin-top: 20px; border:none;">Close</button>
+        <button id="btn-next" onclick="nextQ()" class="btn" style="flex:2;">Next</button>
     </div>
 </div>
 
@@ -450,164 +301,54 @@
 <div id="overlay-results" class="full-screen-overlay">
     <div style="padding: 80px 20px; text-align: center; overflow-y: auto;">
         <h1 id="res-score" style="font-size: 64px; margin:0; color:var(--blue);">90</h1>
-        <p class="text-secondary font-bold uppercase">Total Score</p>
+        <p style="color: var(--text-secondary); font-weight: bold; text-transform: uppercase;">Total Score</p>
         
         <div class="card-grid" style="grid-template-columns: 1fr 1fr; margin-top:40px;">
             <div class="quiz-card" style="align-items:center;">
-                <span class="text-success" style="font-size:24px; font-weight:700;" id="res-correct">0</span>
-                <span class="text-secondary text-xs uppercase">Correct</span>
+                <span style="color: var(--success); font-size:24px; font-weight:700;" id="res-correct">0</span>
+                <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Correct</span>
             </div>
             <div class="quiz-card" style="align-items:center;">
-                <span class="text-danger" style="font-size:24px; font-weight:700;" id="res-wrong">0</span>
-                <span class="text-secondary text-xs uppercase">Wrong</span>
+                <span style="color: var(--danger); font-size:24px; font-weight:700;" id="res-wrong">0</span>
+                <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Wrong</span>
             </div>
             <div class="quiz-card" style="align-items:center;">
-                <span class="text-warning" style="font-size:24px; font-weight:700;" id="res-skip">0</span>
-                <span class="text-secondary text-xs uppercase">Skipped</span>
+                <span style="color: var(--warning); font-size:24px; font-weight:700;" id="res-skip">0</span>
+                <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Skipped</span>
             </div>
             <div class="quiz-card" style="align-items:center;">
-                <span class="text-danger" style="font-size:24px; font-weight:700;" id="res-pen">0</span>
-                <span class="text-secondary text-xs uppercase">Penalty</span>
+                <span style="color: var(--danger); font-size:24px; font-weight:700;" id="res-pen">0</span>
+                <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Penalty</span>
             </div>
         </div>
-        
         <button onclick="closeOverlay('overlay-results')" class="btn" style="margin-top:40px;">Done</button>
     </div>
 </div>
 
 <script>
-    // Global variable for IndexedDB instance
-    let db;
-    const DB_NAME = 'QuizMasterDB';
-    const STORE_NAME = 'quizzes';
-    const DB_VERSION = 1;
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = 'https://dgmhlbtfvrwzvsdwkhcb.supabase.co'; 
+    const SUPABASE_KEY = 'sb_publishable_C406obYbZqfSoZhISV_2qA_MbwAVoIp';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --- STATE ---
-    let quizzes = []; // Will be populated from IndexedDB
+    let quizzes = JSON.parse(localStorage.getItem('quizzes_v4') || '[]');
     let settings = JSON.parse(localStorage.getItem('settings_v4') || '{"darkMode":false,"fontSize":1}');
-    
-    let activeQuiz, editState, playSession, selectedFiles = new Set();
-    
-    // --- INDEXEDDB HANDLERS ---
-    function openDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            
-            request.onerror = (event) => {
-                console.error("IndexedDB Error:", event.target.error);
-                reject("Database error");
-            };
-
-            request.onupgradeneeded = (event) => {
-                db = event.target.result;
-                // Create an object store to hold information about quizzes.
-                // We'll use a unique ID (quiz_id) as the key path.
-                db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-                console.log("DB upgraded or created.");
-            };
-
-            request.onsuccess = (event) => {
-                db = event.target.result;
-                resolve(db);
-            };
-        });
-    }
-
-    async function loadQuizzes() {
-        try {
-            if (!db) await openDB();
-            const transaction = db.transaction([STORE_NAME], "readonly");
-            const store = transaction.objectStore(STORE_NAME);
-            const request = store.getAll();
-
-            return new Promise((resolve, reject) => {
-                request.onsuccess = (event) => {
-                    quizzes = event.target.result;
-                    // Migrate old localStorage data if needed
-                    const oldQuizzes = localStorage.getItem('quizzes_v4');
-                    if (oldQuizzes && quizzes.length === 0) {
-                        try {
-                            const parsedOld = JSON.parse(oldQuizzes);
-                            console.warn("Migrating old localStorage data to IndexedDB.");
-                            // Add old quizzes to DB and clear old storage
-                            Promise.all(parsedOld.map(q => saveQuizToDB(q))).then(() => {
-                                localStorage.removeItem('quizzes_v4');
-                                loadQuizzes().then(resolve); // Reload from DB
-                            });
-                            return;
-                        } catch(e) {
-                            console.error("Error migrating old data:", e);
-                            localStorage.removeItem('quizzes_v4'); // Clear corrupt data
-                        }
-                    }
-                    resolve(quizzes);
-                };
-                request.onerror = (event) => {
-                    console.error("Error loading quizzes:", event.target.error);
-                    reject("Error loading data");
-                };
-            });
-        } catch(e) {
-            console.error("Failed to initialize IndexedDB:", e);
-            return [];
-        }
-    }
-
-    async function saveQuizToDB(quiz) {
-        if (!db) await openDB();
-        const transaction = db.transaction([STORE_NAME], "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-        
-        // Ensure new quizzes get a temporary ID for the quiz array, 
-        // but let IndexedDB handle the keyPath 'id' if it's new.
-        if (!quiz.id) {
-            delete quiz.id; // Ensure IndexedDB auto-increments
-        }
-
-        const request = store.put(quiz);
-
-        return new Promise((resolve, reject) => {
-            request.onsuccess = (event) => {
-                // Update the quiz object with the key generated by IndexedDB
-                quiz.id = event.target.result;
-                resolve(quiz);
-            };
-            request.onerror = (event) => {
-                console.error("Error saving quiz:", event.target.error);
-                reject("Error saving quiz");
-            };
-        });
-    }
-
-    async function deleteQuizzesFromDB(ids) {
-        if (!db) await openDB();
-        const transaction = db.transaction([STORE_NAME], "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-        
-        const requests = ids.map(id => store.delete(id));
-
-        return Promise.all(requests.map(req => new Promise((resolve, reject) => {
-            req.onsuccess = resolve;
-            req.onerror = reject;
-        })));
-    }
+    let activeQuiz, editState, playSession;
+    let selectedFiles = new Set(); // RESTORED: To track file selections
 
     // --- INIT ---
-    async function init() {
+    function init() {
         applySettings();
-        await loadQuizzes();
         switchTab('library', document.querySelector('.tab-item:first-child'));
-        document.getElementById('nav-title').innerText = 'My Library'; // Set title after loading
     }
-    
-    // --- NAVIGATION ---
+
     function switchTab(tabId, el) {
         document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
         document.getElementById(`view-${tabId}`).classList.add('active');
         if(el) el.classList.add('active');
         
-        // Titles & FAB
         const titles = { 'library': 'My Library', 'files': 'File Manager', 'settings': 'Settings' };
         document.getElementById('nav-title').innerText = titles[tabId];
         document.getElementById('fab-add').style.display = tabId === 'library' ? 'flex' : 'none';
@@ -615,230 +356,227 @@
         if(tabId === 'library') renderLibrary();
         if(tabId === 'files') renderFiles();
     }
+
     function openOverlay(id) { document.getElementById(id).classList.add('open'); }
     function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+
+    // Renders Markdown & LaTeX
+    function renderMD(text) {
+        if (!text) return '';
+        const html = marked.parse(text);
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        renderMathInElement(wrapper, {
+            delimiters: [ {left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false} ]
+        });
+        return wrapper.innerHTML;
+    }
 
     // --- LIBRARY ---
     function renderLibrary() {
         const list = document.getElementById('quiz-list'); list.innerHTML = '';
-        if(!quizzes.length) { 
-            document.getElementById('empty-library-msg').style.display = 'block';
-            list.innerHTML = '';
-            return;
-        }
-        document.getElementById('empty-library-msg').style.display = 'none';
-        
-        quizzes.forEach((q) => {
+        quizzes.forEach((q, i) => {
             const card = document.createElement('div'); card.className = 'quiz-card';
-            // Use q.id directly, but still pass an index for compatibility with old functions if needed
-            const idx = quizzes.findIndex(item => item.id === q.id);
             card.innerHTML = `
                 <div style="font-weight:700; font-size:18px; margin-bottom:4px;">${q.title}</div>
-                <div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">${q.questions.length} Questions (ID: ${q.id})</div>
+                <div style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">${q.questions.length} Questions</div>
                 <div class="flex gap-2">
-                    <button onclick="prepStart(${idx})" class="btn" style="padding:10px; font-size:14px;">Play</button>
-                    <button onclick="prepEdit(${idx})" class="btn btn-outline" style="padding:10px; font-size:14px;">Edit</button>
+                    <button onclick="prepStartLocal(${i})" class="btn" style="padding:10px; font-size:14px;">Play</button>
+                    <button onclick="prepEdit(${i})" class="btn btn-outline" style="padding:10px; font-size:14px;">Edit</button>
                 </div>`;
             list.appendChild(card);
         });
     }
 
-    // --- FILES ---
+    // --- RESTORED: FILE MANAGER (IMPORT/EXPORT/DELETE) ---
     function renderFiles() {
         const div = document.getElementById('file-list-container'); div.innerHTML = '';
         selectedFiles.clear();
         quizzes.forEach((q, i) => {
-            const item = document.createElement('div'); item.className = 'file-item';
-            // Use q.id for unique identification in file manager
+            const item = document.createElement('div'); item.className = 'list-item';
+            item.style.justifyContent = 'flex-start'; item.style.gap = '12px';
             item.innerHTML = `
-                <input type="checkbox" data-quiz-id="${q.id}" onchange="toggleSel(this.dataset.quizId, this.checked)" style="width:20px;height:20px;">
+                <input type="checkbox" onchange="toggleSel(${i}, this.checked)" style="flex-shrink:0;">
                 <div style="flex:1;">
                     <div style="font-weight:600;">${q.title}</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">${q.questions.length} Questions (ID: ${q.id})</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">${q.questions.length} Questions</div>
                 </div>`;
             div.appendChild(item);
         });
     }
 
-    function toggleSel(id, c) { if(c) selectedFiles.add(parseInt(id)); else selectedFiles.delete(parseInt(id)); }
+    function toggleSel(i, c) { 
+        if(c) selectedFiles.add(i); 
+        else selectedFiles.delete(i); 
+    }
     
     function selectAllFiles() { 
-        document.querySelectorAll('#file-list-container input').forEach(c=>{
-            c.checked=true; 
-            toggleSel(c.dataset.quizId, true);
+        document.querySelectorAll('#file-list-container input[type="checkbox"]').forEach(c => {
+            c.checked = true; 
+            c.onchange({target:c}); 
         }); 
     }
 
-    async function bulkDelete() {
-        if(!selectedFiles.size) return;
-        if(!confirm(`Delete ${selectedFiles.size} items?`)) return;
-        
-        const idsToDelete = Array.from(selectedFiles);
-        try {
-            await deleteQuizzesFromDB(idsToDelete);
-            await loadQuizzes(); // Reload the state
-            renderFiles();
-        } catch(e) {
-            console.error("Bulk delete failed:", e);
-            // Replace with custom modal
-            alert('Failed to delete quizzes.'); 
-        }
+    function bulkDelete() {
+        if(!selectedFiles.size) return alert("Select files to delete first.");
+        if(!confirm(`Are you sure you want to delete ${selectedFiles.size} items?`)) return;
+        const idxs = Array.from(selectedFiles).sort((a,b)=>b-a);
+        idxs.forEach(i => quizzes.splice(i,1));
+        saveData(); renderFiles(); renderLibrary();
     }
 
     function exportAll() {
+        if(!quizzes.length) return alert("No quizzes to export.");
         const blob = new Blob([JSON.stringify(quizzes)], {type:'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'quiz_master_backup.json'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'backup.json'; a.click();
     }
 
     function handleImport(inp) {
         Array.from(inp.files).forEach(f => {
             const r = new FileReader();
-            r.onload = async e => { 
+            r.onload = e => { 
                 try {
-                    const data = JSON.parse(e.target.result);
-                    const quizzesToImport = (Array.isArray(data) ? data : [data]).map(q => {
-                        // Remove existing ID to force a new creation in DB
-                        const { id, ...rest } = q; 
-                        return rest;
-                    });
-                    
-                    for (const quiz of quizzesToImport) {
-                        await saveQuizToDB(quiz);
-                    }
-                    await loadQuizzes();
-                    renderFiles();
-                    // Replace with custom modal
-                    alert('Import Successful!'); 
+                    const d = JSON.parse(e.target.result);
+                    (Array.isArray(d) ? d : [d]).forEach(q => quizzes.push(q));
+                    saveData(); 
+                    renderFiles(); 
+                    renderLibrary();
+                    alert('Import successful!');
                 } catch(x){ 
-                    console.error("Import failed:", x);
-                    // Replace with custom modal
-                    alert('Invalid JSON format or import error.'); 
-                }};
+                    alert('Invalid JSON file.'); 
+                }
+            };
             r.readAsText(f);
         });
+        inp.value = ''; // Reset input to allow re-importing the same file if needed
     }
 
-    function importRaw() { 
-        try { 
-            const data = JSON.parse(document.getElementById('json-paste').value); 
-            (Array.isArray(data) ? data : [data]).forEach(async q => {
-                const { id, ...rest } = q; // Remove ID if present
-                await saveQuizToDB(rest);
-            });
-            // Replace with custom modal
-            alert('Imported! Reloading data...'); 
-            loadQuizzes().then(() => switchTab('library', document.querySelector('.tab-item:first-child')));
-        } catch(e){
-            console.error("Raw import failed:", e);
-            // Replace with custom modal
-            alert('Error: Invalid JSON.');
-        } 
-    }
-
-    // --- EDITOR ---
-    function openEditor() { 
-        // Create new quiz template with a unique ID
-        editState = {id: null, title:'', questions:[]}; 
-        renderEditor(); 
-        openOverlay('overlay-editor'); 
-    }
-
-    function prepEdit(i) { 
-        // Deep clone the quiz object for editing
-        editState = JSON.parse(JSON.stringify(quizzes[i])); 
-        renderEditor(); 
-        openOverlay('overlay-editor'); 
-    }
-    
-    function renderEditor() {
-        document.getElementById('edit-title').value = editState.title;
-        const list = document.getElementById('edit-questions-list'); list.innerHTML = '';
-        editState.questions.forEach((q, idx) => {
-            const wrap = document.createElement('div'); wrap.className = 'list-group';
-            wrap.innerHTML = `
-                <div class="list-header flex justify-between"><span>Question ${idx+1}</span><span style="color:var(--danger); cursor:pointer;" onclick="delQ(${idx})">Delete</span></div>
-                <div class="list-item"><textarea oninput="updQ(${idx},'text',this.value)" rows="2" placeholder="Question Text">${q.text}</textarea></div>
-                <div class="list-item"><textarea oninput="updQ(${idx},'paragraph',this.value)" rows="2" placeholder="Optional Paragraph">${q.paragraph||''}</textarea></div>
-                ${q.options.map((o,i)=>`
-                    <div class="list-item">
-                        <input type="radio" name="eo${idx}" ${q.correct===i?'checked':''} onchange="updQ(${idx},'correct',${i})" style="width:auto; margin-right: 10px;">
-                        <input value="${o}" oninput="updOpt(${idx},${i},this.value)" placeholder="Option ${i+1}">
-                    </div>
-                `).join('')}
-            `;
-            list.appendChild(wrap);
+    // --- NEW: TEXT IMPORT METHODS ---
+    function copyJsonFormat() {
+        const sampleJson = `[
+  {
+    "title": "My Sample Quiz",
+    "questions": [
+      {
+        "text": "What is the capital of France?",
+        "options": ["London", "Berlin", "Paris", "Rome"],
+        "correct": 2,
+        "explanation": "Paris is the capital and most populous city of France."
+      }
+    ]
+  }
+]`;
+        navigator.clipboard.writeText(sampleJson).then(() => {
+            alert('JSON format copied to clipboard!');
+        }).catch(() => {
+            alert('Failed to copy to clipboard. Your browser might block this action.');
         });
     }
 
-    function addQuestion() { editState.questions.push({text:'', options:['','','',''], correct:0}); renderEditor(); }
-    function delQ(i) { editState.questions.splice(i,1); renderEditor(); }
-    function updQ(i,k,v) { 
-        if(k === 'correct') v = parseInt(v); // Ensure correct index is a number
-        editState.questions[i][k]=v; 
-    }
-    function updOpt(qi,oi,v) { editState.questions[qi].options[oi]=v; }
-
-    async function saveQuiz() {
-        editState.title = document.getElementById('edit-title').value || 'Untitled Quiz';
-        
+    async function pasteJson() {
         try {
-            const savedQuiz = await saveQuizToDB(editState);
-            
-            // Update the local quizzes array
-            const existingIndex = quizzes.findIndex(q => q.id === savedQuiz.id);
-            if (existingIndex > -1) {
-                quizzes[existingIndex] = savedQuiz;
-            } else {
-                quizzes.push(savedQuiz);
-            }
-
-            closeOverlay('overlay-editor'); 
-            renderLibrary();
-        } catch(e) {
-            console.error("Failed to save quiz:", e);
-             // Replace with custom modal
-            alert('Failed to save quiz to database.');
+            const text = await navigator.clipboard.readText();
+            document.getElementById('json-import-textarea').value = text;
+        } catch (err) {
+            alert('Failed to read clipboard. Please paste manually into the box.');
         }
     }
 
-    // --- PLAYER ---
-    function prepStart(i) { 
+    function importJsonText() {
+        const textArea = document.getElementById('json-import-textarea');
+        const text = textArea.value;
+        if (!text.trim()) {
+            return alert('Please paste JSON data in the box first.');
+        }
+        try {
+            const data = JSON.parse(text);
+            const newQuizzes = Array.isArray(data) ? data : [data];
+            
+            // Basic validation
+            if (!newQuizzes[0] || !newQuizzes[0].title || !Array.isArray(newQuizzes[0].questions)) {
+                throw new Error("Invalid structure");
+            }
+
+            newQuizzes.forEach(q => quizzes.push(q));
+            saveData();
+            renderLibrary();
+            renderFiles();
+            
+            textArea.value = ''; // clear textarea on success
+            alert(`Successfully imported ${newQuizzes.length} quiz(zes)! Check your Library.`);
+        } catch (e) {
+            alert('Invalid JSON format or structure. Please make sure you are using the correct format.');
+        }
+    }
+
+    // --- ONLINE QUIZ LOGIC ---
+    async function openOnlineSetup() {
+        openOverlay('overlay-online');
+        const sel = document.getElementById('online-subject');
+        sel.innerHTML = '<option value="All">Loading Subjects...</option>';
+        
+        const { data, error } = await supabaseClient.from('questions').select('subject');
+        if (error || !data) { sel.innerHTML = '<option value="All">Error Loading Subjects</option>'; return; }
+        
+        const subjects = [...new Set(data.map(d => d.subject))].filter(Boolean);
+        sel.innerHTML = '<option value="All">All Subjects</option>' + subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    async function fetchAndStartOnlineQuiz() {
+        const btn = document.getElementById('btn-fetch-online');
+        const originalText = btn.innerText;
+        btn.innerText = "Fetching...";
+        btn.disabled = true;
+
+        const subject = document.getElementById('online-subject').value;
+        const limit = parseInt(document.getElementById('online-count').value) || 10;
+        
+        let query = supabaseClient.from('questions').select('*');
+        if (subject !== 'All') query = query.eq('subject', subject);
+        
+        const { data, error } = await query;
+        btn.innerText = originalText;
+        btn.disabled = false;
+
+        if (error) return alert("Error fetching database.");
+        if (!data || data.length === 0) return alert("No questions found.");
+        
+        // Shuffle & map Supabase format to local format
+        const pool = data.sort(() => Math.random() - 0.5).slice(0, limit);
+        const mappedQuestions = pool.map(q => ({
+            text: q.text,
+            options: q.options,
+            correct: Array.isArray(q.correct) ? q.correct[0] : q.correct,
+            explanation: q.explanation
+        }));
+
+        activeQuiz = { title: (subject === 'All' ? 'Mixed' : subject) + ' Online Quiz', questions: mappedQuestions };
+        
+        closeOverlay('overlay-online');
+        document.getElementById('setup-title').innerText = activeQuiz.title + ' Setup';
+        openOverlay('overlay-start');
+    }
+
+    // --- PLAYER PREP ---
+    function prepStartLocal(i) { 
         activeQuiz = quizzes[i]; 
-        document.getElementById('play-timer').value = '';
-        document.getElementById('play-penalty').value = '0';
-        document.getElementById('play-shuffle').checked = false;
-        document.getElementById('play-mode').checked = true;
+        document.getElementById('setup-title').innerText = activeQuiz.title + ' Setup';
         openOverlay('overlay-start'); 
     }
 
     function startQuiz() {
-        if (!activeQuiz.questions.length) {
-            // Replace with custom modal
-            alert("This quiz has no questions! Please add some before playing.");
-            return;
-        }
-
         closeOverlay('overlay-start');
-
         const tm = parseInt(document.getElementById('play-timer').value);
-        
         playSession = {
-            qIdxs: [...Array(activeQuiz.questions.length).keys()], // Indices in original order (0 to N-1)
-            curr: 0, // Current index in the qIdxs array
-            ans: [], // Array of { q: original_idx, c: choice_idx, ok: boolean, skip: boolean }
-            timer: tm ? tm*60 : null, 
-            left: tm ? tm*60 : 0,
+            qIdxs: [...Array(activeQuiz.questions.length).keys()], curr: 0, ans: [],
+            timer: tm ? tm*60 : null, left: tm ? tm*60 : 0,
             penalty: parseFloat(document.getElementById('play-penalty').value),
             shuffle: document.getElementById('play-shuffle').checked,
             examMode: document.getElementById('play-mode').checked
         };
-
         if(playSession.shuffle) playSession.qIdxs.sort(()=>Math.random()-0.5);
-
         if(playSession.timer) startTimer();
-
-        openOverlay('overlay-player'); 
-        loadQ();
+        openOverlay('overlay-player'); loadQ();
     }
 
     function startTimer() {
@@ -849,211 +587,150 @@
             if(playSession.left <= 0) finishGame();
         }, 1000);
     }
+    function fmtTime(s) { return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; }
 
-    function fmtTime(s) { 
-        if (s < 0) return "0:00"; // Should not happen but for safety
-        return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; 
-    }
-    
-    function changeQ(delta) {
-        let newIdx = playSession.curr + delta;
-        if(newIdx >= 0 && newIdx < playSession.qIdxs.length) {
-            playSession.curr = newIdx;
-            loadQ();
-        } else if (delta > 0 && newIdx === playSession.qIdxs.length) {
-            finishGame(); 
-        }
-    }
-
-    function jumpToQ(index) {
-        if (index >= 0 && index < playSession.qIdxs.length) {
-            playSession.curr = index;
-            loadQ();
-            closeOverlay('overlay-quick-switch');
-        }
-    }
-
+    // --- PLAYER LOGIC ---
     function loadQ() {
+        document.getElementById('game-explanation').classList.add('hidden');
         const qIdx = playSession.qIdxs[playSession.curr];
         const q = activeQuiz.questions[qIdx];
         
         document.getElementById('game-progress').innerText = `Q ${playSession.curr+1}/${playSession.qIdxs.length}`;
         document.getElementById('game-bar').style.width = `${((playSession.curr)/playSession.qIdxs.length)*100}%`;
-        document.getElementById('game-q-text').innerText = q.text;
+        document.getElementById('game-q-text').innerHTML = renderMD(q.text);
         
-        const pBox = document.getElementById('game-paragraph');
-        if(q.paragraph) { pBox.classList.remove('hidden'); document.getElementById('game-p-text').innerText = q.paragraph; }
-        else pBox.classList.add('hidden');
-
         const opts = document.getElementById('game-options'); opts.innerHTML = '';
-        
-        // Find existing answer using the original question index (qIdx)
         const existingAns = playSession.ans.find(a => a.q === qIdx);
         
         q.options.forEach((o, i) => {
-            const btn = document.createElement('button'); btn.className = 'btn btn-outline';
-            btn.style.textAlign='left'; btn.style.justifyContent='flex-start'; btn.innerText = o;
+            const btn = document.createElement('button'); btn.className = 'btn btn-outline md-content';
+            btn.style.textAlign='left'; btn.style.justifyContent='flex-start'; btn.innerHTML = renderMD(o);
             
-            // Restore visual state if answered
             if(existingAns) {
-                if(i === existingAns.c) { // User's chosen answer
+                if(i === existingAns.c) {
                     if (playSession.examMode) {
                         btn.style.background = 'var(--blue)'; btn.style.color = 'white';
-                    } else if (existingAns.ok) { // Practice mode: Correct
+                    } else if (existingAns.ok) {
                         btn.style.background = 'var(--success)'; btn.style.color = 'white'; btn.style.borderColor='transparent';
-                    } else { // Practice mode: Incorrect
+                    } else {
                         btn.style.background = 'var(--danger)'; btn.style.color = 'white'; btn.style.borderColor='transparent';
                     }
                 } else if (!playSession.examMode && !existingAns.ok && i === q.correct) {
-                    // Practice mode: Show the correct answer
                     btn.style.background = 'var(--success)'; btn.style.color = 'white'; btn.style.borderColor='transparent';
                 }
-                
-                // In practice mode, disable all buttons after answer is chosen
                 if (!playSession.examMode) btn.disabled = true;
             }
-
-            // Skip handling: if a question was skipped, it has no chosen answer (c = -1)
-            if (existingAns && existingAns.skip) {
-                // Do not apply any styling for skipped questions
-            }
-
-            btn.onclick = () => handleAns(i, btn, q.correct);
+            btn.onclick = () => handleAns(i, btn, q.correct, q.explanation);
             opts.appendChild(btn);
         });
 
-        // Update Button States
         document.getElementById('btn-prev').disabled = (playSession.curr === 0);
         document.getElementById('btn-next').innerText = (playSession.curr === playSession.qIdxs.length - 1) ? "Finish" : "Next";
-
-        // Logic for skip/next visibility based on exam/practice mode
-        const answered = existingAns && !existingAns.skip;
-
-        if (!playSession.examMode) { // Practice Mode
-             document.getElementById('btn-skip').style.display = 'none'; // No explicit skip button
-             document.getElementById('btn-next').style.display = answered ? 'block' : 'none'; // Force answer before next
-             // Note: In practice mode, if you click Next without answering, it just won't show up. 
-             // To proceed, you must answer or changeQ(1) will not be called.
-        } else { // Exam Mode
-            document.getElementById('btn-skip').style.display = 'block';
+        
+        if (!playSession.examMode) {
+             if(existingAns) {
+                 document.getElementById('btn-next').style.display = 'block';
+                 document.getElementById('btn-skip').style.display = 'none';
+                 if(q.explanation) {
+                     const exp = document.getElementById('game-explanation');
+                     exp.innerHTML = `<strong>Explanation:</strong><br>` + renderMD(q.explanation);
+                     exp.classList.remove('hidden');
+                 }
+             } else {
+                 document.getElementById('btn-next').style.display = 'none';
+                 document.getElementById('btn-skip').style.display = 'block';
+             }
+        } else {
             document.getElementById('btn-next').style.display = 'block';
-            // If answered, the user can still click next or prev. The skip button just logs it as unanswered/skipped
-            document.getElementById('btn-skip').disabled = answered;
+            document.getElementById('btn-skip').style.display = existingAns ? 'none' : 'block';
         }
     }
 
-    function handleAns(c, btn, cor) {
+    function handleAns(c, btn, cor, explanation) {
         const qIdx = playSession.qIdxs[playSession.curr];
-        
-        // Remove existing answer/skip for this question if any (allow overwrite in Exam Mode)
         const existingIdx = playSession.ans.findIndex(a => a.q === qIdx);
-        if (existingIdx > -1) {
-            playSession.ans[existingIdx] = {q: qIdx, c: c, ok: c===cor, skip: false};
-        } else {
-            playSession.ans.push({q: qIdx, c: c, ok: c===cor, skip: false});
-        }
+        if (existingIdx > -1) playSession.ans[existingIdx] = {q: qIdx, c: c, ok: c===cor};
+        else playSession.ans.push({q: qIdx, c: c, ok: c===cor});
 
         if(!playSession.examMode) {
-            // Practice Mode: Show result immediately, disable further selection
             Array.from(document.getElementById('game-options').children).forEach(b=>b.disabled=true);
-            if(c===cor) { 
-                btn.style.background='var(--success)'; btn.style.color='white'; btn.style.borderColor='transparent'; 
-            } else { 
+            if(c===cor) { btn.style.background='var(--success)'; btn.style.color='white'; btn.style.borderColor='transparent'; }
+            else { 
                 btn.style.background='var(--danger)'; btn.style.color='white'; btn.style.borderColor='transparent'; 
-                // Highlight correct answer
-                document.getElementById('game-options').children[cor].style.background='var(--success)'; 
-                document.getElementById('game-options').children[cor].style.color='white'; 
+                document.getElementById('game-options').children[cor].style.background='var(--success)'; document.getElementById('game-options').children[cor].style.color='white'; 
+            }
+            if(explanation) {
+                 const exp = document.getElementById('game-explanation');
+                 exp.innerHTML = `<strong>Explanation:</strong><br>` + renderMD(explanation);
+                 exp.classList.remove('hidden');
             }
             document.getElementById('btn-next').style.display='block'; 
+            document.getElementById('btn-skip').style.display='none';
         } else {
-            // Exam Mode: Only show selection, allow changing answer until 'Finish'
             Array.from(document.getElementById('game-options').children).forEach(b => {
                 b.style.background = 'transparent'; b.style.color = 'var(--blue)';
             });
             btn.style.background = 'var(--blue)'; btn.style.color = 'white';
-            document.getElementById('btn-skip').disabled = true; // Cannot skip after answering
+            document.getElementById('btn-skip').style.display='none';
         }
     }
     
+    function prevQ() { if(playSession.curr > 0) { playSession.curr--; loadQ(); } }
     function skipQ() { 
-        // Log skipped
         const qIdx = playSession.qIdxs[playSession.curr];
-        // Remove old answer if exists
         const existingIdx = playSession.ans.findIndex(a => a.q === qIdx);
         if (existingIdx > -1) playSession.ans.splice(existingIdx, 1);
-        
         playSession.ans.push({q:qIdx, c:-1, ok:false, skip:true}); 
-        changeQ(1); 
+        nextQ(); 
+    }
+    function nextQ() { 
+        if(playSession.curr < playSession.qIdxs.length-1) { playSession.curr++; loadQ(); } 
+        else finishGame(); 
     }
     
-    function openQuickSwitch() {
-        const grid = document.getElementById('quick-switch-grid');
-        grid.innerHTML = '';
-        
-        playSession.qIdxs.forEach((originalQIdx, arrayIndex) => {
-            const btn = document.createElement('button');
-            btn.className = 'q-switch-btn';
-            btn.innerText = arrayIndex + 1;
-            btn.onclick = () => jumpToQ(arrayIndex);
-
-            // Check answer status for styling
-            const ans = playSession.ans.find(a => a.q === originalQIdx);
-            if (ans && !ans.skip) {
-                btn.classList.add('answered');
-            }
-            if (arrayIndex === playSession.curr) {
-                btn.classList.add('current');
-            }
-
-            grid.appendChild(btn);
-        });
-
-        openOverlay('overlay-quick-switch');
-    }
-
-    function finishGame(isExit = false) {
+    function finishGame() {
         if(playSession.timerId) clearInterval(playSession.timerId);
-
-        if (isExit) {
-             // Replace with custom modal
-            if (!confirm("Are you sure you want to exit? Your progress will be lost.")) {
-                if (playSession.timer) startTimer(); // Restart timer if canceled
-                return;
-            }
-        }
-        
         closeOverlay('overlay-player');
-
         let c=0, w=0, s=0;
         playSession.ans.forEach(a => { if(a.skip) s++; else if(a.ok) c++; else w++; });
-        
-        // Calculate total questions answered (correct + wrong)
-        const totalAnswered = c + w;
-        
-        // Final score calculation
-        const sc = totalAnswered - (w * playSession.penalty);
+        const sc = c - (w * playSession.penalty);
         
         document.getElementById('res-score').innerText = sc.toFixed(2);
         document.getElementById('res-correct').innerText = c;
         document.getElementById('res-wrong').innerText = w;
         document.getElementById('res-skip').innerText = s;
         document.getElementById('res-pen').innerText = (w * playSession.penalty).toFixed(2);
-        
-        // Only show results overlay if not exiting
-        if (!isExit) {
-            openOverlay('overlay-results');
-        } else {
-            renderLibrary(); // Go back to library view
-        }
+        openOverlay('overlay-results');
+    }
+
+    // --- EDITING LOCAL QUIZ ---
+    function openEditor() { editState = {title:'', questions:[]}; renderEditor(); openOverlay('overlay-editor'); }
+    function prepEdit(i) { editState = JSON.parse(JSON.stringify(quizzes[i])); editState._idx = i; renderEditor(); openOverlay('overlay-editor'); }
+    function renderEditor() {
+        document.getElementById('edit-title').value = editState.title;
+        const list = document.getElementById('edit-questions-list'); list.innerHTML = '';
+        editState.questions.forEach((q, idx) => {
+            const wrap = document.createElement('div'); wrap.className = 'list-group';
+            wrap.innerHTML = `
+                <div class="list-header flex justify-between"><span>Question ${idx+1}</span><span style="color:red; cursor:pointer;" onclick="delQ(${idx})">Delete</span></div>
+                <div class="list-item"><textarea oninput="updQ(${idx},'text',this.value)" rows="2" placeholder="Question Text">${q.text}</textarea></div>
+                ${q.options.map((o,i)=>`<div class="list-item"><input type="radio" name="eo${idx}" ${q.correct===i?'checked':''} onchange="updQ(${idx},'correct',${i})"><input style="margin-left:10px;" value="${o}" oninput="updOpt(${idx},${i},this.value)" placeholder="Option ${i+1}"></div>`).join('')}
+            `;
+            list.appendChild(wrap);
+        });
+    }
+    function addQuestion() { editState.questions.push({text:'', options:['','','',''], correct:0}); renderEditor(); }
+    function delQ(i) { editState.questions.splice(i,1); renderEditor(); }
+    function updQ(i,k,v) { editState.questions[i][k]=v; }
+    function updOpt(qi,oi,v) { editState.questions[qi].options[oi]=v; }
+    function saveQuiz() {
+        editState.title = document.getElementById('edit-title').value || 'Untitled';
+        if(editState._idx !== undefined) quizzes[editState._idx] = editState; else quizzes.push(editState);
+        delete editState._idx; saveData(); closeOverlay('overlay-editor'); renderLibrary(); renderFiles();
     }
 
     // --- SYSTEM ---
-    function saveData() { 
-        // This function is now superseded by saveQuizToDB but kept for minor internal usage style if needed.
-        // All major saves now go through saveQuizToDB.
-        console.log("Using IndexDB for data persistence."); 
-    } 
-
+    function saveData() { localStorage.setItem('quizzes_v4', JSON.stringify(quizzes)); }
     function toggleTheme(c) { settings.darkMode = c; localStorage.setItem('settings_v4', JSON.stringify(settings)); applySettings(); }
     function setFontSize(v) { settings.fontSize = v; localStorage.setItem('settings_v4', JSON.stringify(settings)); applySettings(); }
     function applySettings() {
@@ -1063,48 +740,7 @@
         document.getElementById('font-slider').value = settings.fontSize;
     }
 
-    async function deleteAllData() { 
-        // Replace with custom modal
-        if(!confirm('DANGER: Reset all application data? This will clear all quizzes and settings.')) {
-            return;
-        }
-
-        try {
-            // Delete IndexedDB database
-            const req = indexedDB.deleteDatabase(DB_NAME);
-            await new Promise((resolve, reject) => {
-                req.onsuccess = resolve;
-                req.onerror = reject;
-            });
-
-            // Clear localStorage settings
-            localStorage.clear();
-            
-            // Reload the application
-            location.reload(); 
-        } catch(e) {
-            console.error("Failed to delete database:", e);
-            // Replace with custom modal
-            alert("Error deleting database. Check console for details.");
-        }
-    }
-
-    // Initialize the application, which now waits for IndexedDB load
-    init();
-
-    // Register Service Worker for PWA capabilities
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js') // Assuming the app is at the root of the GitHub Page or repo path
-                .then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                })
-                .catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-        });
-    }
-
+    window.onload = init;
 </script>
 </body>
-                </html>
+</html>
