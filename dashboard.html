@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Database Admin Dashboard</title>
+    
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5; --bg: #f9fafb; --surface: #ffffff;
+            --text-main: #111827; --text-sec: #6b7280; --border: #e5e7eb;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg); color: var(--text-main); margin: 0; padding: 20px;
+        }
+        /* Hidden by default until password is correct */
+        .container { max-width: 1000px; margin: 0 auto; display: none; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+        
+        .card { background: var(--surface); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        h1, h2 { margin-top: 0; }
+        
+        textarea { width: 100%; height: 250px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: monospace; font-size: 13px; resize: vertical; box-sizing: border-box; }
+        
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 12px 20px;
+            border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px;
+        }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-group .btn { margin-top: 0; flex: 1; }
+
+        .code-example { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; font-size: 12px; overflow-x: auto; font-family: monospace; }
+        
+        .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border-bottom: none; }
+
+        /* Password Overlay Styles */
+        #login-overlay {
+            position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+        }
+        #login-box {
+            background: var(--surface); padding: 30px; border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--border);
+            width: 100%; max-width: 320px; text-align: center;
+        }
+        #login-error { color: red; font-size: 13px; margin-top: 10px; display: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- Password Protection Overlay -->
+<div id="login-overlay">
+    <div id="login-box">
+        <h2 style="margin-bottom: 20px;">Admin Access</h2>
+        <input type="password" id="admin-pwd" placeholder="Enter password" style="width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 16px; box-sizing: border-box;" onkeydown="if(event.key === 'Enter') checkPwd()">
+        <button class="btn" onclick="checkPwd()">Login</button>
+        <div id="login-error">Incorrect password</div>
+        <button class="btn btn-outline" style="margin-top: 15px;" onclick="window.location.href='https://padhand.github.io/Apps/index.html'">Back to Quiz App</button>
+    </div>
+</div>
+
+<div class="container" id="main-content">
+    <div style="grid-column: 1 / -1;">
+        <h1>Admin Dashboard</h1>
+        <p style="color: var(--text-sec);">Manage the central Supabase database for the Online Quizzes feature.</p>
+    </div>
+
+    <!-- Data Entry Section -->
+    <div class="card">
+        <h2>Import JSON to Database</h2>
+        <p style="font-size: 14px; color: var(--text-sec);">Paste an array of questions in the correct JSON format to batch upload to the server.</p>
+        
+        <textarea id="json-input" spellcheck="false" data-gramm="false" placeholder='[\n  {\n    "subject": "Math",\n    "type": "single",\n    "text": "What is 2+2?",\n    "options": ["3", "4", "5", "6"],\n    "correct": [1],\n    "explanation": "2+2 equals 4."\n  }\n]'></textarea>
+        
+        <div class="btn-group">
+            <button class="btn btn-outline" id="btn-paste" onclick="pasteFromClipboard()">📋 Paste</button>
+            <button class="btn" id="btn-import" onclick="importToDatabase()">📡 Import</button>
+        </div>
+        <div id="status-msg" style="margin-top: 10px; font-weight: bold; font-size: 14px;"></div>
+    </div>
+
+    <!-- DB Stats & Info Section -->
+    <div class="card">
+        <h2>Database Overview</h2>
+        <button class="btn btn-outline" onclick="loadDatabaseStats()" style="width: auto; margin-bottom: 16px;">Refresh Stats</button>
+        
+        <div id="db-stats">Loading stats...</div>
+        
+        <h3 style="margin-top: 30px; font-size: 16px;">Required JSON Format</h3>
+        <div class="code-example">
+[
+  {
+    "subject": "History",
+    "type": "single",
+    "text": "Who discovered America?",
+    "options": ["Columbus", "Magellan", "Cook"],
+    "correct": [0],
+    "explanation": "In 1492."
+  }
+]
+        </div>
+        <ul style="font-size: 13px; color: var(--text-sec); margin-top: 10px; padding-left: 16px;">
+            <li><b>subject</b>: Category of the question.</li>
+            <li><b>text</b>: The question (supports Markdown/LaTeX).</li>
+            <li><b>options</b>: Array of string choices.</li>
+            <li><b>correct</b>: Array containing the correct index (e.g., [0]).</li>
+            <li><b>explanation</b>: Optional explanation string.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // --- PASSWORD PROTECTION LOGIC ---
+    function checkPwd() {
+        const pwd = document.getElementById('admin-pwd').value;
+        if (pwd === 'daitari@padhan') {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'grid';
+            loadDatabaseStats(); // Load data only after successful login
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = 'https://dgmhlbtfvrwzvsdwkhcb.supabase.co'; 
+    const SUPABASE_KEY = 'sb_publishable_C406obYbZqfSoZhISV_2qA_MbwAVoIp';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function pasteFromClipboard() {
+        const status = document.getElementById('status-msg');
+        try {
+            const text = await navigator.clipboard.readText();
+            document.getElementById('json-input').value = text;
+            status.style.color = 'green';
+            status.innerText = 'Pasted successfully from clipboard.';
+        } catch (err) {
+            status.style.color = 'red';
+            status.innerText = 'Clipboard access denied. Please paste manually (Ctrl+V).';
+            console.error('Failed to read clipboard contents: ', err);
+        }
+    }
+
+    async function loadDatabaseStats() {
+        const statsDiv = document.getElementById('db-stats');
+        statsDiv.innerHTML = "Fetching...";
+        
+        const { data, error } = await supabaseClient.from('questions').select('subject');
+        
+        if (error) {
+            statsDiv.innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
+            return;
+        }
+
+        const counts = {};
+        data.forEach(q => {
+            const subj = q.subject || 'Uncategorized';
+            counts[subj] = (counts[subj] || 0) + 1;
+        });
+
+        if (Object.keys(counts).length === 0) {
+            statsDiv.innerHTML = "Database is empty.";
+            return;
+        }
+
+        let html = '';
+        for (const [subj, count] of Object.entries(counts)) {
+            html += `<div class="stat-row"><span>${subj}</span><strong>${count} Qs</strong></div>`;
+        }
+        html += `<div class="stat-row" style="background: var(--bg); padding: 12px; margin-top:10px; border-radius: 6px;">
+                    <span><strong>Total Questions</strong></span>
+                    <strong>${data.length}</strong>
+                 </div>`;
+        
+        statsDiv.innerHTML = html;
+    }
+
+    async function importToDatabase() {
+        const btn = document.getElementById('btn-import');
+        const status = document.getElementById('status-msg');
+        const inputStr = document.getElementById('json-input').value.trim();
+
+        if (!inputStr) {
+            status.style.color = 'red';
+            status.innerText = "Please paste some JSON data first.";
+            return;
+        }
+
+        let parsedData;
+        try {
+            parsedData = JSON.parse(inputStr);
+            if (!Array.isArray(parsedData)) parsedData = [parsedData];
+        } catch (e) {
+            status.style.color = 'red';
+            status.innerText = "Invalid JSON format: " + e.message;
+            return;
+        }
+
+        for (let i = 0; i < parsedData.length; i++) {
+            const q = parsedData[i];
+            if (!q.text || !Array.isArray(q.options) || !Array.isArray(q.correct)) {
+                status.style.color = 'red';
+                status.innerText = `Validation Error at item index ${i}: missing 'text', 'options' array, or 'correct' array.`;
+                return;
+            }
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Uploading...";
+        status.innerText = "";
+
+        const { error } = await supabaseClient.from('questions').insert(parsedData);
+
+        btn.disabled = false;
+        btn.innerText = "Import to Database";
+
+        if (error) {
+            status.style.color = 'red';
+            status.innerText = "Upload failed: " + error.message;
+        } else {
+            status.style.color = 'green';
+            status.innerText = `Success! Inserted ${parsedData.length} questions.`;
+            document.getElementById('json-input').value = '';
+            loadDatabaseStats();
+        }
+    }
+</script>
+</body>
+</html>
